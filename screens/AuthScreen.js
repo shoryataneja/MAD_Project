@@ -21,7 +21,7 @@ const AuthScreen = ({ navigation }) => {
       const storedPassword = await AsyncStorage.getItem("userPassword");
 
       if (email === storedEmail && password === storedPassword) {
-        navigation.replace("Home");
+        navigation.replace("Main");
       } else {
         setMessage("Invalid credentials ❌");
       }
