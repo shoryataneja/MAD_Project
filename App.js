@@ -2,19 +2,21 @@ import * as React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { Provider as PaperProvider } from "react-native-paper";
-import { Icon } from "react-native-paper";
+import { Provider as PaperProvider, Icon } from "react-native-paper";
 
 // Screens
 import AuthScreen from "./screens/AuthScreen";
 import HomeScreen from "./screens/HomeScreen";
 import HistoryScreen from "./screens/HistoryScreen";
 import StatsScreen from "./screens/StatsScreen";
+import ProfileScreen from "./screens/ProfileScreen";
+import AboutScreen from "./screens/AboutScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-function MainTabs() {
+// --- Bottom Tabs: Home, History, Stats ---
+function TabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -25,22 +27,24 @@ function MainTabs() {
           height: 60,
         },
         tabBarLabelStyle: {
-          fontSize: 13,
+          fontSize: 12,
           fontWeight: "600",
         },
         tabBarActiveTintColor: "#6F4E37",
         tabBarInactiveTintColor: "#b9a89c",
-        tabBarIcon: ({ color, size }) => {
+        tabBarIcon: ({ color }) => {
           let iconName;
-
-          if (route.name === "Home") {
-            iconName = "home-outline";
-          } else if (route.name === "History") {
-            iconName = "book-open-outline";
-          } else if (route.name === "Stats") {
-            iconName = "chart-bar";
+          switch (route.name) {
+            case "Home":
+              iconName = "home-outline";
+              break;
+            case "History":
+              iconName = "book-open-outline";
+              break;
+            case "Stats":
+              iconName = "chart-bar";
+              break;
           }
-
           return <Icon source={iconName} size={22} color={color} />;
         },
       })}
@@ -52,13 +56,16 @@ function MainTabs() {
   );
 }
 
+// --- Stack Navigator: includes Profile & About ---
 export default function App() {
   return (
     <PaperProvider>
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Auth" component={AuthScreen} />
-          <Stack.Screen name="Main" component={MainTabs} />
+          <Stack.Screen name="Main" component={TabNavigator} />
+          <Stack.Screen name="Profile" component={ProfileScreen} />
+          <Stack.Screen name="About" component={AboutScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </PaperProvider>
