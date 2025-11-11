@@ -1,30 +1,35 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Button, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function HomeScreen({ navigation }) {
-  const [chaiCount, setChaiCount] = useState(0);
+  const [teaCount, setTeaCount] = useState(0);
+  const [coffeeCount, setCoffeeCount] = useState(0);
   const [today, setToday] = useState("");
   const [greeting, setGreeting] = useState("");
   const [quote, setQuote] = useState("");
   const [mood, setMood] = useState("");
-  const [dailyLimit, setDailyLimit] = useState(5); // default limit
 
-  const chaiQuotes = [
+
+  const TEA_LIMIT = 5;
+  const COFFEE_LIMIT = 3;
+
+  const quotes = [
     "Life happens, chai helps ☕",
     "You’re brew-tiful, never forget it 💛",
-    "Chai: because adulting is hard 😅",
     "Stressed, blessed, and tea-obsessed 🍵",
+    "Chai: because adulting is hard 😅",
     "A cup of tea makes everything better 🌿",
   ];
 
-  // Get today's date
-  const getToday = () => {
-    const date = new Date();
-    return date.toISOString().split("T")[0];
-  };
+  const getToday = () => new Date().toISOString().split("T")[0];
 
-  // Time-based greeting
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return "Good Morning ☀️";
@@ -32,62 +37,89 @@ export default function HomeScreen({ navigation }) {
     return "Good Evening 🌙";
   };
 
-  // Mood based on chai count
-  const getMood = (count) => {
-    if (count === 0) return "Sleepy 😴";
-    if (count < 3) return "Warming up 🔥";
-    if (count < 6) return "Buzzing with energy ⚡";
+  const getMood = (total) => {
+    if (total === 0) return "Sleepy 😴";
+    if (total < 3) return "Warming up 🔥";
+    if (total < 6) return "Buzzing with energy ⚡";
     return "You might be 70% chai now 😜";
   };
+
 
   useEffect(() => {
     const loadData = async () => {
       const storedDate = await AsyncStorage.getItem("chaiDate");
-      const storedCount = await AsyncStorage.getItem("chaiCount");
-      const storedLimit = await AsyncStorage.getItem("dailyLimit");
+      const storedTea = await AsyncStorage.getItem("teaCount");
+      const storedCoffee = await AsyncStorage.getItem("coffeeCount");
 
       const todayDate = getToday();
       setToday(todayDate);
       setGreeting(getGreeting());
-      setQuote(chaiQuotes[Math.floor(Math.random() * chaiQuotes.length)]);
+      setQuote(quotes[Math.floor(Math.random() * quotes.length)]);
 
-      if (storedLimit) setDailyLimit(parseInt(storedLimit));
-
-      if (storedDate === todayDate && storedCount) {
-        setChaiCount(parseInt(storedCount));
+      if (storedDate === todayDate) {
+        if (storedTea) setTeaCount(parseInt(storedTea));
+        if (storedCoffee) setCoffeeCount(parseInt(storedCoffee));
       } else {
-        await AsyncStorage.setItem("chaiDate", todayDate);
-        await AsyncStorage.setItem("chaiCount", "0");
-        setChaiCount(0);
+        await AsyncStorage.multiSet([
+          ["chaiDate", todayDate],
+          ["teaCount", "0"],
+          ["coffeeCount", "0"],
+        ]);
+        setTeaCount(0);
+        setCoffeeCount(0);
       }
     };
     loadData();
   }, []);
 
-  const addChai = async () => {
-    const newCount = chaiCount + 1;
-    setChaiCount(newCount);
-    setMood(getMood(newCount));
-
-    await AsyncStorage.setItem("chaiCount", newCount.toString());
-    await AsyncStorage.setItem("chaiDate", getToday());
+  const saveCounts = async (tea, coffee) => {
+    await AsyncStorage.multiSet([
+      ["teaCount", tea.toString()],
+      ["coffeeCount", coffee.toString()],
+      ["chaiDate", getToday()],
+    ]);
   };
 
-  const addCoffee = async () => {
-    const newCount = chaiCount + 1;
-    setChaiCount(newCount);
-    setMood(getMood(newCount));
+  const addDrink = (type) => {
+    let newTea = teaCount;
+    let newCoffee = coffeeCount;
 
-    await AsyncStorage.setItem("chaiCount", newCount.toString());
-    await AsyncStorage.setItem("chaiDate", getToday());
+    if (type === "tea") {
+      newTea += 1;
+      if (newTea > TEA_LIMIT)
+        showToast("⚠️ Too much chai! Limit is " + TEA_LIMIT + " cups/day.");
+    } else {
+      newCoffee += 1;
+      if (newCoffee > COFFEE_LIMIT)
+        showToast("⚡ Too much coffee! Limit is " + COFFEE_LIMIT + ".");
+    }
+
+    setTeaCount(newTea);
+    setCoffeeCount(newCoffee);
+    setMood(getMood(newTea + newCoffee));
+    saveCounts(newTea, newCoffee);
+  };
+
+  const resetCount = async (type) => {
+    if (type === "tea") {
+      setTeaCount(0);
+      await AsyncStorage.setItem("teaCount", "0");
+      showToast("🍵 Tea counter reset!");
+    } else {
+      setCoffeeCount(0);
+      await AsyncStorage.setItem("coffeeCount", "0");
+      showToast("☕ Coffee counter reset!");
+    }
   };
 
   useEffect(() => {
-    setMood(getMood(chaiCount));
-  }, [chaiCount]);
+    setMood(getMood(teaCount + coffeeCount));
+  }, [teaCount, coffeeCount]);
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
+      {/* Toast Message */}
+
       {/* Header */}
       <View style={styles.header}>
         <View>
@@ -112,29 +144,75 @@ export default function HomeScreen({ navigation }) {
 
       <Text style={styles.date}>📅 {today}</Text>
 
-      {/* Tracker Card */}
+      {/* Tea Card */}
       <View style={styles.card}>
-        <Text style={styles.counterTitle}>Today’s Count</Text>
+        <Text style={styles.counterTitle}>🍵 Tea Tracker</Text>
         <Text style={styles.counter}>
-          {chaiCount} / {dailyLimit}
+          {teaCount} / {TEA_LIMIT}
         </Text>
-        <Text style={styles.mood}>{mood}</Text>
+
+        {teaCount > TEA_LIMIT && (
+          <Text style={styles.warningBox}>
+            ⚠️ You’ve crossed your chai limit! Drink some water 💧
+          </Text>
+        )}
+
+        <View style={styles.cardButtons}>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => addDrink("tea")}
+          >
+            <Text style={styles.addButtonText}>+ Add Tea</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.resetButton}
+            onPress={() => resetCount("tea")}
+          >
+            <Text style={styles.resetButtonText}>Reset</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* Add Buttons */}
-      <View style={styles.addButtons}>
-        <TouchableOpacity style={styles.addButton} onPress={addChai}>
-          <Text style={styles.addButtonText}>+ Add Tea 🍵</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.addButton} onPress={addCoffee}>
-          <Text style={styles.addButtonText}>+ Add Coffee ☕</Text>
-        </TouchableOpacity>
+      {/* Coffee Card */}
+      <View style={styles.card}>
+        <Text style={styles.counterTitle}>☕ Coffee Tracker</Text>
+        <Text style={styles.counter}>
+          {coffeeCount} / {COFFEE_LIMIT}
+        </Text>
+
+        {coffeeCount > COFFEE_LIMIT && (
+          <Text style={styles.warningBox}>
+            ⚡ Too much caffeine! Maybe switch to chai 😅
+          </Text>
+        )}
+
+        <View style={styles.cardButtons}>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => addDrink("coffee")}
+          >
+            <Text style={styles.addButtonText}>+ Add Coffee</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.resetButton}
+            onPress={() => resetCount("coffee")}
+          >
+            <Text style={styles.resetButtonText}>Reset</Text>
+          </TouchableOpacity>
+        </View>
       </View>
+
+      {/* Mood */}
+      <Text style={styles.moodText}>{mood}</Text>
 
       {/* Quick Nav */}
       <View style={styles.quickNav}>
-        <Button title="📜 View History" onPress={() => navigation.navigate("History")} />
-        <Button title="📊 View Stats" onPress={() => navigation.navigate("Stats")} />
+        <TouchableOpacity onPress={() => navigation.navigate("History")}>
+          <Text style={styles.link}>📜 View History</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("Stats")}>
+          <Text style={styles.link}>📊 View Stats</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Quote */}
@@ -142,17 +220,19 @@ export default function HomeScreen({ navigation }) {
         <Text style={styles.quote}>💬 {quote}</Text>
       </View>
 
-      <Text style={styles.footer}>Resets automatically every morning 🌅</Text>
-    </View>
+      <Text style={styles.footer}>
+        Resets automatically every morning 🌅
+      </Text>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: "#FFF8F0",
     padding: 20,
     alignItems: "center",
+    flexGrow: 1,
   },
   header: {
     width: "100%",
@@ -160,67 +240,65 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginTop: 40,
-    marginBottom: 10,
   },
-  headerButtons: {
-    flexDirection: "row",
-  },
-  iconButton: {
-    marginLeft: 10,
-  },
-  iconText: {
-    fontSize: 24,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#6F4E37",
-  },
-  greeting: {
-    fontSize: 16,
-    color: "#6F4E37",
-  },
-  date: {
-    color: "#8B6B4A",
-    marginBottom: 20,
-  },
+  greeting: { fontSize: 16, color: "#6F4E37" },
+  title: { fontSize: 20, fontWeight: "bold", color: "#6F4E37" },
+  headerButtons: { flexDirection: "row" },
+  iconButton: { marginLeft: 10 },
+  iconText: { fontSize: 24 },
+  date: { color: "#8B6B4A", marginVertical: 10 },
+
   card: {
     backgroundColor: "#FFEEDB",
     width: "90%",
     padding: 20,
     borderRadius: 15,
     alignItems: "center",
+    marginVertical: 10,
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 10,
-    marginBottom: 20,
   },
   counterTitle: {
     fontSize: 16,
     color: "#8B6B4A",
+    marginBottom: 5,
   },
   counter: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: "bold",
     color: "#6F4E37",
+    marginBottom: 10,
   },
-  mood: {
-    fontSize: 16,
-    marginTop: 5,
-    color: "#A97142",
+  warningBox: {
+    backgroundColor: "#FFD6C9",
+    color: "#B22222",
+    fontWeight: "600",
+    padding: 8,
+    borderRadius: 6,
+    width: "100%",
+    textAlign: "center",
+    marginBottom: 8,
   },
-  addButtons: {
+  cardButtons: {
     flexDirection: "row",
     justifyContent: "space-between",
-    width: "90%",
-    marginBottom: 20,
+    width: "100%",
   },
   addButton: {
     flex: 1,
     marginHorizontal: 5,
     backgroundColor: "#6F4E37",
-    padding: 15,
-    borderRadius: 10,
+    padding: 10,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  resetButton: {
+    flex: 1,
+    marginHorizontal: 5,
+    backgroundColor: "#D3C0A6",
+    padding: 10,
+    borderRadius: 8,
     alignItems: "center",
   },
   addButtonText: {
@@ -228,11 +306,40 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "bold",
   },
+  resetButtonText: {
+    color: "#6F4E37",
+    fontSize: 15,
+    fontWeight: "bold",
+  },
+  toast: {
+    position: "absolute",
+    top: 20,
+    backgroundColor: "#6F4E37",
+    padding: 10,
+    borderRadius: 8,
+    zIndex: 100,
+  },
+  toastText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  moodText: {
+    fontSize: 16,
+    marginTop: 15,
+    color: "#A97142",
+    fontStyle: "italic",
+  },
   quickNav: {
     flexDirection: "row",
     justifyContent: "space-between",
     width: "90%",
-    marginBottom: 20,
+    marginVertical: 15,
+  },
+  link: {
+    color: "#007AFF",
+    fontSize: 16,
+    fontWeight: "600",
   },
   quoteContainer: {
     backgroundColor: "#FFF3E0",
@@ -246,7 +353,7 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
   },
   footer: {
-    marginTop: 15,
+    marginTop: 20,
     fontSize: 12,
     color: "#A97142",
   },
