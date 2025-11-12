@@ -80,25 +80,22 @@ export default function HomeScreen({ navigation }) {
     ]);
   };
 
-  const addDrink = (type) => {
-    let newTea = teaCount;
-    let newCoffee = coffeeCount;
+const addDrink = (type) => {
+  let newTea = teaCount;
+  let newCoffee = coffeeCount;
 
-    if (type === "tea") {
-      newTea += 1;
-      if (newTea > TEA_LIMIT)
-        showToast("⚠️ Too much chai! Limit is " + TEA_LIMIT + " cups/day.");
-    } else {
-      newCoffee += 1;
-      if (newCoffee > COFFEE_LIMIT)
-        showToast("⚡ Too much coffee! Limit is " + COFFEE_LIMIT + ".");
-    }
+  if (type === "tea") {
+    newTea += 1;
+  } else {
+    newCoffee += 1;
+  }
 
-    setTeaCount(newTea);
-    setCoffeeCount(newCoffee);
-    setMood(getMood(newTea + newCoffee));
-    saveCounts(newTea, newCoffee);
-  };
+  setTeaCount(newTea);
+  setCoffeeCount(newCoffee);
+  setMood(getMood(newTea + newCoffee));
+  saveCounts(newTea, newCoffee);
+};
+
 
   const resetCount = async (type) => {
     if (type === "tea") {
