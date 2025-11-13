@@ -179,7 +179,7 @@ const addDrink = (type) => {
 
         {coffeeCount > COFFEE_LIMIT && (
           <Text style={styles.warningBox}>
-            ⚡ Too much caffeine! Maybe switch to chai 😅
+            ⚡ Too much caffeine! Drink Some water 💧!
           </Text>
         )}
 
