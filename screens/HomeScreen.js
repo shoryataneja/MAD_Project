@@ -94,6 +94,8 @@ const addDrink = (type) => {
   setCoffeeCount(newCoffee);
   setMood(getMood(newTea + newCoffee));
   saveCounts(newTea, newCoffee);
+
+  addToHistory(type);
 };
 
 
@@ -112,6 +114,40 @@ const addDrink = (type) => {
   useEffect(() => {
     setMood(getMood(teaCount + coffeeCount));
   }, [teaCount, coffeeCount]);
+
+
+  const addToHistory = async (type) => {
+  try {
+    const now = new Date();
+
+    const timeString = now.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    const dateString = now.toISOString().split("T")[0]; // YYYY-MM-DD
+
+    const newEntry = {
+      type,
+      time: timeString,
+      date: dateString,
+    };
+
+    // Get existing logs
+    const storedHistory = await AsyncStorage.getItem("historyLogs");
+    let historyArray = storedHistory ? JSON.parse(storedHistory) : [];
+
+    // Add new entry at top
+    historyArray.unshift(newEntry);
+
+    // Save back
+    await AsyncStorage.setItem("historyLogs", JSON.stringify(historyArray));
+
+  } catch (error) {
+    console.log("Error saving history entry:", error);
+  }
+};
+
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
