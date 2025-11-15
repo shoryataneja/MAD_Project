@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { View, Text, StyleSheet, FlatList } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 
@@ -9,11 +9,7 @@ export default function HistoryScreen() {
   const loadHistory = async () => {
     try {
       const storedHistory = await AsyncStorage.getItem("historyLogs");
-      if (storedHistory) {
-        setHistory(JSON.parse(storedHistory));
-      } else {
-        setHistory([]);
-      }
+      setHistory(storedHistory ? JSON.parse(storedHistory) : []);
     } catch (error) {
       console.log("Error loading history:", error);
     }
@@ -25,25 +21,31 @@ export default function HistoryScreen() {
     }, [])
   );
 
+  const renderItem = ({ item }) => (
+    <View style={styles.item}>
+      <Text style={styles.type}>
+        {item.type === "tea" ? "🍵 Tea" : "☕ Coffee"}
+      </Text>
+      <Text style={styles.meta}>
+        {item.time} • {item.date}
+      </Text>
+    </View>
+  );
+
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <Text style={styles.title}>📜 History</Text>
 
-      {history.length === 0 ? (
-        <Text style={styles.empty}>No history yet...</Text>
-      ) : (
-        history.map((entry, index) => (
-          <View key={index} style={styles.item}>
-            <Text style={styles.type}>
-              {entry.type === "tea" ? "🍵 Tea" : "☕ Coffee"}
-            </Text>
-            <Text style={styles.meta}>
-              {entry.time} • {entry.date}
-            </Text>
-          </View>
-        ))
-      )}
-    </ScrollView>
+      <FlatList
+        data={history}
+        renderItem={renderItem}
+        keyExtractor={(_, index) => index.toString()}
+        contentContainerStyle={{ paddingBottom: 50 }}
+        ListEmptyComponent={
+          <Text style={styles.empty}>No history yet...</Text>
+        }
+      />
+    </View>
   );
 }
 
@@ -51,6 +53,7 @@ const styles = StyleSheet.create({
   container: {
     padding: 15,
     backgroundColor: "#FFF8F0",
+    flex: 1,
   },
   title: {
     fontSize: 22,
