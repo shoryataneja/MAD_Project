@@ -143,18 +143,14 @@ const resetCount = async (type) => {
   }
 };
 
-
-
-
- 
-
   useEffect(() => {
     setMood(getMood(teaCount + coffeeCount));
   }, [teaCount, coffeeCount]);
 
-
-
-
+// const logout = async () => {
+//   await AsyncStorage.multiRemove(["userEmail", "userPassword"]);
+//   navigation.replace("Auth");
+// };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -254,6 +250,7 @@ const resetCount = async (type) => {
           <Text style={styles.link}>📊 View Stats</Text>
         </TouchableOpacity>
       </View>
+        
 
       {/* Quote */}
       <View style={styles.quoteContainer}>
@@ -263,6 +260,12 @@ const resetCount = async (type) => {
       <Text style={styles.footer}>
         Resets automatically every morning 🌅
       </Text>
+      
+
+      {/* <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+        <Text style={styles.logoutText}>🚪 Logout</Text>
+      </TouchableOpacity> */}
+
     </ScrollView>
   );
 }
@@ -397,4 +400,34 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#A97142",
   },
+  logoutButton: {
+  marginTop: 20,
+  backgroundColor: "#D9534F",
+  padding: 12,
+  borderRadius: 10,
+  width: "90%",
+  alignItems: "center",
+},
+// logoutButton: {
+//   marginTop: 15,
+//   backgroundColor: "#7BA4CE ",   // warm chai-danger tone
+//   paddingVertical: 12,
+//   paddingHorizontal: 20,
+//   borderRadius: 12,
+//   alignItems: "center",
+
+//   width: "60%",       // reduced width
+//   alignSelf: "center",
+//   shadowColor: "#000",
+//   shadowOpacity: 0.1,
+//   shadowRadius: 5,
+// },
+
+// logoutText: {
+//   color: "#FFF8F0",
+//   fontSize: 16,
+//   fontWeight: "700",
+// },
+
+
 });
