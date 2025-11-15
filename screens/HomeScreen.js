@@ -107,10 +107,13 @@ const addToHistory = async (type) => {
     // Save back
     await AsyncStorage.setItem("historyLogs", JSON.stringify(historyArray));
 
+    console.log("HISTORY UPDATED →", historyArray);
+
   } catch (error) {
     console.log("Error saving history entry:", error);
   }
 };
+
 
 const addDrink = (type) => {
   let newTea = teaCount;
