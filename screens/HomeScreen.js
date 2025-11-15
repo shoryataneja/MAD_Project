@@ -80,43 +80,7 @@ export default function HomeScreen({ navigation }) {
     ]);
   };
 
-const addDrink = (type) => {
-  let newTea = teaCount;
-  let newCoffee = coffeeCount;
-
-  if (type === "tea") {
-    newTea += 1;
-  } else {
-    newCoffee += 1;
-  }
-
-  setTeaCount(newTea);
-  setCoffeeCount(newCoffee);
-  setMood(getMood(newTea + newCoffee));
-  saveCounts(newTea, newCoffee);
-
-  addToHistory(type);
-};
-
-
-  const resetCount = async (type) => {
-    if (type === "tea") {
-      setTeaCount(0);
-      await AsyncStorage.setItem("teaCount", "0");
-      showToast("🍵 Tea counter reset!");
-    } else {
-      setCoffeeCount(0);
-      await AsyncStorage.setItem("coffeeCount", "0");
-      showToast("☕ Coffee counter reset!");
-    }
-  };
-
-  useEffect(() => {
-    setMood(getMood(teaCount + coffeeCount));
-  }, [teaCount, coffeeCount]);
-
-
-  const addToHistory = async (type) => {
+const addToHistory = async (type) => {
   try {
     const now = new Date();
 
@@ -147,6 +111,46 @@ const addDrink = (type) => {
     console.log("Error saving history entry:", error);
   }
 };
+
+const addDrink = (type) => {
+  let newTea = teaCount;
+  let newCoffee = coffeeCount;
+
+  if (type === "tea") {
+    newTea += 1;
+  } else {
+    newCoffee += 1;
+  }
+
+  setTeaCount(newTea);
+  setCoffeeCount(newCoffee);
+  setMood(getMood(newTea + newCoffee));
+  saveCounts(newTea, newCoffee);
+
+  addToHistory(type);
+};
+
+const resetCount = async (type) => {
+  if (type === "tea") {
+    setTeaCount(0);
+    await AsyncStorage.setItem("teaCount", "0");
+  } else {
+    setCoffeeCount(0);
+    await AsyncStorage.setItem("coffeeCount", "0");
+  }
+};
+
+
+
+
+ 
+
+  useEffect(() => {
+    setMood(getMood(teaCount + coffeeCount));
+  }, [teaCount, coffeeCount]);
+
+
+
 
 
   return (
