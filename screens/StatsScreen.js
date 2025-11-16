@@ -3,89 +3,98 @@ import { View, Text, StyleSheet, ScrollView } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function StatsScreen() {
-  const [streak, setStreak] = useState(0);
+  const [todayTea, setTodayTea] = useState(0);
+  const [todayCoffee, setTodayCoffee] = useState(0);
+
+  const [weekTea, setWeekTea] = useState(0);
+  const [weekCoffee, setWeekCoffee] = useState(0);
+
+  const getToday = () => new Date().toLocaleDateString("en-CA");
 
   useEffect(() => {
-    calculateDailyStreak();
+    loadStats();
   }, []);
 
-  // 🍵 Calculate Daily Streak
-  const calculateDailyStreak = async () => {
-    const storedHistory = await AsyncStorage.getItem("historyLogs");
-    const historyArray = storedHistory ? JSON.parse(storedHistory) : [];
+  const loadStats = async () => {
+    const history = await AsyncStorage.getItem("historyLogs");
+    const logs = history ? JSON.parse(history) : [];
 
-    // Extract unique dates where tea or coffee was consumed
-    const uniqueDays = Array.from(new Set(historyArray.map(item => item.date)));
+    const today = getToday();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
 
-    // Sort latest → oldest
-    uniqueDays.sort((a, b) => new Date(b) - new Date(a));
+    let tTea = 0, tCoffee = 0, wTea = 0, wCoffee = 0;
 
-    let streakCount = 1;
-    for (let i = 0; i < uniqueDays.length - 1; i++) {
-      const current = new Date(uniqueDays[i]);
-      const next = new Date(uniqueDays[i + 1]);
+    logs.forEach(item => {
+      const itemDate = new Date(item.date);
 
-      const diffDays = Math.floor((current - next) / (1000 * 60 * 60 * 24));
+      if (item.date === today) {
+        item.type === "tea" ? tTea++ : tCoffee++;
+      }
 
-      if (diffDays === 1) streakCount++;
-      else break;
-    }
+      if (itemDate >= sevenDaysAgo) {
+        item.type === "tea" ? wTea++ : wCoffee++;
+      }
+    });
 
-    setStreak(uniqueDays.length ? streakCount : 0);
+    setTodayTea(tTea);
+    setTodayCoffee(tCoffee);
+    setWeekTea(wTea);
+    setWeekCoffee(wCoffee);
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
 
-      <Text style={styles.title}>📊 Chai Stats Overview</Text>
+      <Text style={styles.headerTitle}>📊 Stats</Text>
 
-      {/* ==================== (COMPONENT 1) - Daily Streak ==================== */}
+      {/* COMPONENT 1 — TODAY */}
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>🔥 Daily Chai Streak</Text>
-        <Text style={styles.streakText}>{streak} days</Text>
+        <Text style={styles.cardTitle}>📅 Today</Text>
+        <Text style={styles.text}>🍵 Tea: {todayTea}</Text>
+        <Text style={styles.text}>☕ Coffee: {todayCoffee}</Text>
       </View>
 
+      {/* COMPONENT 2 — LAST 7 DAYS */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>📅 Last 7 Days</Text>
+        <Text style={styles.text}>🍵 Tea: {weekTea}</Text>
+        <Text style={styles.text}>☕ Coffee: {weekCoffee}</Text>
+      </View>
 
-
-      {/* ====================  (COMING NEXT)  ==================== */}
-      {/* (COMPONENT 2) - Last 7 Days Summary */}
-      {/* (COMPONENT 3) - Weekly Insights */}
-      {/* (COMPONENT 4) - Healthy Consumption Meter */}
-      
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#FFF8F0",
     padding: 20,
-    paddingTop: 80,  // starts lower from top
-    alignItems: "center",
+    backgroundColor: "#FFF8F0",
     flexGrow: 1,
+    paddingTop: 70,
   },
-  title: {
-    fontSize: 20,
+  headerTitle: {
+    fontSize: 23,
     fontWeight: "bold",
     color: "#6F4E37",
-    marginBottom: 15,
+    textAlign: "center",
+    marginBottom: 22,
   },
   card: {
-    width: "90%",
     backgroundColor: "#FFEEDB",
-    padding: 15,
-    borderRadius: 12,
-    marginVertical: 10,
+    padding: 18,
+    borderRadius: 15,
+    marginBottom: 18,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
     color: "#6F4E37",
     marginBottom: 6,
   },
-  streakText: {
-    fontSize: 24,
-    fontWeight: "bold",
+  text: {
+    fontSize: 16,
     color: "#6F4E37",
+    marginVertical: 2,
   },
 });
