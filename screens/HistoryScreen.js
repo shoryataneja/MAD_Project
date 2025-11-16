@@ -54,9 +54,47 @@ export default function HistoryScreen() {
     );
   };
 
+const clearAllHistory = async () => {
+  Alert.alert(
+    "Clear All History",
+    "Are you sure you want to delete ALL records?",
+    [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Clear All",
+        style: "destructive",
+        onPress: async () => {
+          await AsyncStorage.removeItem("historyLogs");
+          setSectionedHistory([]);
+
+          // Reset counts globally
+          await AsyncStorage.multiSet([
+            ["teaCount", "0"],
+            ["coffeeCount", "0"],
+          ]);
+        },
+      },
+    ]
+  );
+};
+
+
+
+
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>📜 History</Text>
+      <View style={styles.headerRow}><View style={styles.headerRow}>
+  <Text style={styles.header}>📜 History</Text>
+
+  {sectionedHistory.length > 0 && (
+    <TouchableOpacity onPress={clearAllHistory}>
+      <Text style={styles.clearButton}>🗑 Clear All</Text>
+    </TouchableOpacity>
+  )}
+</View>
+
+</View>
+
 
       {sectionedHistory.length === 0 ? (
         <Text style={styles.noData}>No records yet...</Text>
@@ -91,5 +129,32 @@ const styles = StyleSheet.create({
   itemRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 6, marginHorizontal: 6, borderBottomWidth: 0.4, borderColor: "#D7C1A0" },
   itemType: { fontSize: 16 },
   itemTime: { fontSize: 16, color: "#555" },
-  noData: { marginTop: 30, textAlign: "center", fontSize: 16, color: "#A97142" }
+  noData: { marginTop: 30, textAlign: "center", fontSize: 16, color: "#A97142" },
+  headerRow: {
+  marginTop: 35,
+  marginBottom: 10,
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  width: "100%",
+  paddingHorizontal: 5,
+},
+
+header: {
+  fontSize: 22,
+  fontWeight: "bold",
+  color: "#6F4E37",
+},
+
+clearButton: {
+  backgroundColor: "#D9534F",
+  color: "#fff",
+  paddingVertical: 6,
+  paddingHorizontal: 12,
+  borderRadius: 8,
+  fontWeight: "600",
+  fontSize: 13,
+},
+
+
 });
