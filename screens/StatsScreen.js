@@ -1,150 +1,165 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useCallback } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
+
+const TEA_LIMIT = 5;
+const COFFEE_LIMIT = 3;
 
 export default function StatsScreen() {
-  const [todayTea, setTodayTea] = useState(0);
-  const [todayCoffee, setTodayCoffee] = useState(0);
+  const [todayStats, setTodayStats] = useState({ tea: 0, coffee: 0 });
+  const [weekStats, setWeekStats] = useState({ tea: 0, coffee: 0 });
+  const [weeklyAvg, setWeeklyAvg] = useState({ tea: "0.00", coffee: "0.00" });
+  const [healthyStreak, setHealthyStreak] = useState({
+    current: 0,
+    longest: 0,
+  });
 
-  const [weekTea, setWeekTea] = useState(0);
-  const [weekCoffee, setWeekCoffee] = useState(0);
+  const getDateString = (date) => date.toLocaleDateString("en-CA");
+  const getToday = () => getDateString(new Date());
 
-  const [streak, setStreak] = useState(0);
+  const getDateNDaysAgo = (n) => {
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    return getDateString(d);
+  };
 
-  const getToday = () => new Date().toLocaleDateString("en-CA");
+  const loadStats = useCallback(async () => {
+    const storedHistory = await AsyncStorage.getItem("historyLogs");
+    const historyArray = storedHistory ? JSON.parse(storedHistory) : [];
 
-  useEffect(() => {
-    loadStats();
+    const todayDate = getToday();
+    const dailyMap = {};
+
+    historyArray.forEach((item) => {
+      const { date, type } = item;
+      if (!dailyMap[date]) dailyMap[date] = { tea: 0, coffee: 0 };
+
+      if (type === "tea") dailyMap[date].tea += 1;
+      if (type === "coffee") dailyMap[date].coffee += 1;
+    });
+
+    // Today's Stats
+    const todayTea = dailyMap[todayDate]?.tea || 0;
+    const todayCoffee = dailyMap[todayDate]?.coffee || 0;
+    setTodayStats({ tea: todayTea, coffee: todayCoffee });
+
+    // Last 7 Days Stats
+    const last7 = [];
+    for (let i = 0; i < 7; i++) last7.push(getDateNDaysAgo(i));
+
+    let teaTotal = 0;
+    let coffeeTotal = 0;
+
+    last7.forEach((d) => {
+      if (dailyMap[d]) {
+        teaTotal += dailyMap[d].tea;
+        coffeeTotal += dailyMap[d].coffee;
+      }
+    });
+
+    setWeekStats({ tea: teaTotal, coffee: coffeeTotal });
+    setWeeklyAvg({
+      tea: (teaTotal / 7).toFixed(2),
+      coffee: (coffeeTotal / 7).toFixed(2),
+    });
+
+    // Healthy Streak Only
+    let longest = 0,
+      current = 0;
+
+    for (let i = 0; i < 365; i++) {
+      const day = getDateNDaysAgo(i);
+      const d = dailyMap[day];
+
+      const logged = d && (d.tea > 0 || d.coffee > 0);
+      const withinLimit = logged && d.tea <= TEA_LIMIT && d.coffee <= COFFEE_LIMIT;
+
+      if (withinLimit) {
+        current += 1;
+      } else {
+        longest = Math.max(longest, current);
+        current = 0;
+      }
+    }
+
+    longest = Math.max(longest, current);
+
+    setHealthyStreak({ current, longest });
   }, []);
 
-  const loadStats = async () => {
-    const history = await AsyncStorage.getItem("historyLogs");
-    const logs = history ? JSON.parse(history) : [];
-
-    const today = getToday();
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-
-    let tTea = 0, tCoffee = 0, wTea = 0, wCoffee = 0;
-
-    logs.forEach(item => {
-      const itemDate = new Date(item.date);
-
-      // Today
-      if (item.date === today) {
-        item.type === "tea" ? tTea++ : tCoffee++;
-      }
-
-      // Last 7 days
-      if (itemDate >= sevenDaysAgo) {
-        item.type === "tea" ? wTea++ : wCoffee++;
-      }
-    });
-
-    setTodayTea(tTea);
-    setTodayCoffee(tCoffee);
-
-    setWeekTea(wTea);
-    setWeekCoffee(wCoffee);
-
-    calculateStreak(logs);
-  };
-
-  // ------------------ STREAK LOGIC ------------------
-  const calculateStreak = (logs) => {
-    if (!logs || logs.length === 0) {
-      setStreak(0);
-      return;
-    }
-
-    const drinksByDate = {};
-
-    logs.forEach(item => {
-      if (!drinksByDate[item.date]) drinksByDate[item.date] = 0;
-      drinksByDate[item.date]++;
-    });
-
-    let streakCount = 0;
-    let checkDate = new Date();
-
-    while (true) {
-      const dateStr = checkDate.toLocaleDateString("en-CA");
-      const drinks = drinksByDate[dateStr] || 0;
-
-      if (drinks === 0 || drinks > 3) break;
-
-      streakCount++;
-      checkDate.setDate(checkDate.getDate() - 1);
-    }
-
-    setStreak(streakCount);
-  };
+  useFocusEffect(
+    useCallback(() => {
+      loadStats();
+    }, [loadStats])
+  );
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.header}>📊 Stats</Text>
 
-      <Text style={styles.headerTitle}>📊 Stats</Text>
-
-      {/* COMPONENT 1 — TODAY */}
+      {/* Today */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>📅 Today</Text>
-        <Text style={styles.text}>🍵 Tea: {todayTea}</Text>
-        <Text style={styles.text}>☕ Coffee: {todayCoffee}</Text>
+        <Text style={styles.statText}>🍵 Tea: {todayStats.tea}</Text>
+        <Text style={styles.statText}>☕ Coffee: {todayStats.coffee}</Text>
       </View>
 
-      {/* COMPONENT 2 — LAST 7 DAYS */}
+      {/* Weekly */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>📅 Last 7 Days</Text>
-        <Text style={styles.text}>🍵 Tea: {weekTea}</Text>
-        <Text style={styles.text}>☕ Coffee: {weekCoffee}</Text>
+        <Text style={styles.cardTitle}>📆 Last 7 Days</Text>
+        <Text style={styles.statText}>🍵 Total Tea: {weekStats.tea}</Text>
+        <Text style={styles.statText}>☕ Total Coffee: {weekStats.coffee}</Text>
       </View>
 
-      {/* COMPONENT 3 — STREAKS */}
+      {/* Weekly Avg */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>🔥 Healthy Streak</Text>
-        <Text style={styles.text}>🚀 Current streak: <Text style={{fontWeight:"bold"}}>{streak} day(s)</Text></Text>
-        <Text style={styles.subNote}>* Count increases only if ≤ 3 drinks/day</Text>
+        <Text style={styles.cardTitle}>📈 Weekly Averages</Text>
+        <Text style={styles.statText}>🍵 Avg Tea/day: {weeklyAvg.tea}</Text>
+        <Text style={styles.statText}>☕ Avg Coffee/day: {weeklyAvg.coffee}</Text>
       </View>
 
+      {/* Healthy Streak */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>🌱 Healthy Streak</Text>
+        <Text style={styles.statText}>Current: {healthyStreak.current} day(s)</Text>
+        <Text style={styles.statText}>Longest: {healthyStreak.longest} day(s)</Text>
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-    backgroundColor: "#FFF8F0",
-    flexGrow: 1,
-    paddingTop: 70,
-  },
-  headerTitle: {
-    fontSize: 23,
+  backgroundColor: "#FFF8F0",
+  padding: 20,
+  paddingTop: 60,   // ⬅️ add this line or increase value
+  alignItems: "center",
+  flexGrow: 1,
+},
+  header: {
+    fontSize: 22,
     fontWeight: "bold",
+    marginTop: 40,
+    marginBottom: 20,
     color: "#6F4E37",
-    textAlign: "center",
-    marginBottom: 22,
   },
   card: {
     backgroundColor: "#FFEEDB",
+    width: "90%",
     padding: 18,
     borderRadius: 15,
-    marginBottom: 18,
+    marginVertical: 10,
   },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 17,
+    fontWeight: "600",
     color: "#6F4E37",
-    marginBottom: 6,
+    marginBottom: 8,
   },
-  text: {
-    fontSize: 16,
-    color: "#6F4E37",
+  statText: {
+    fontSize: 15,
+    color: "#8B6B4A",
     marginVertical: 2,
-  },
-  subNote: {
-    fontSize: 12,
-    marginTop: 8,
-    color: "#A97142",
-    fontStyle: "italic",
   },
 });
