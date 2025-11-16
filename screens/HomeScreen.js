@@ -100,19 +100,27 @@ export default function HomeScreen({ navigation }) {
   };
 
   // RESET only clears that drink’s logs
-  const resetCount = async (type) => {
-    const storedHistory = await AsyncStorage.getItem("historyLogs");
-    let historyArray = storedHistory ? JSON.parse(storedHistory) : [];
+const resetCount = async (type) => {
+  const storedHistory = await AsyncStorage.getItem("historyLogs");
+  let historyArray = storedHistory ? JSON.parse(storedHistory) : [];
 
-    historyArray = historyArray.filter(item => item.type !== type);
+  const today = new Date().toISOString().split("T")[0];
 
-    await AsyncStorage.setItem("historyLogs", JSON.stringify(historyArray));
+  // Remove entries of THIS drink type AND today's date only
+  historyArray = historyArray.filter(
+    (item) => !(item.type === type && item.date === today)
+  );
 
-    if (type === "tea") setTeaCount(0);
-    else setCoffeeCount(0);
+  await AsyncStorage.setItem("historyLogs", JSON.stringify(historyArray));
 
-    setMood(getMood((type === "tea" ? coffeeCount : teaCount)));
-  };
+  // Update UI count only for today
+  if (type === "tea") {
+    setTeaCount(0);
+  } else {
+    setCoffeeCount(0);
+  }
+};
+
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
