@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   ScrollView,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function HomeScreen({ navigation }) {
   const [teaCount, setTeaCount] = useState(0);
@@ -15,7 +16,6 @@ export default function HomeScreen({ navigation }) {
   const [greeting, setGreeting] = useState("");
   const [quote, setQuote] = useState("");
   const [mood, setMood] = useState("");
-
 
   const TEA_LIMIT = 5;
   const COFFEE_LIMIT = 3;
@@ -44,118 +44,78 @@ export default function HomeScreen({ navigation }) {
     return "You might be 70% chai now 😜";
   };
 
-
+  // Load initial UI data
   useEffect(() => {
-    const loadData = async () => {
-      const storedDate = await AsyncStorage.getItem("chaiDate");
-      const storedTea = await AsyncStorage.getItem("teaCount");
-      const storedCoffee = await AsyncStorage.getItem("coffeeCount");
-
-      const todayDate = getToday();
-      setToday(todayDate);
-      setGreeting(getGreeting());
-      setQuote(quotes[Math.floor(Math.random() * quotes.length)]);
-
-      if (storedDate === todayDate) {
-        if (storedTea) setTeaCount(parseInt(storedTea));
-        if (storedCoffee) setCoffeeCount(parseInt(storedCoffee));
-      } else {
-        await AsyncStorage.multiSet([
-          ["chaiDate", todayDate],
-          ["teaCount", "0"],
-          ["coffeeCount", "0"],
-        ]);
-        setTeaCount(0);
-        setCoffeeCount(0);
-      }
-    };
-    loadData();
+    setToday(getToday());
+    setGreeting(getGreeting());
+    setQuote(quotes[Math.floor(Math.random() * quotes.length)]);
   }, []);
 
-  const saveCounts = async (tea, coffee) => {
-    await AsyncStorage.multiSet([
-      ["teaCount", tea.toString()],
-      ["coffeeCount", coffee.toString()],
-      ["chaiDate", getToday()],
-    ]);
-  };
+  // Sync count with history when coming back to HomeScreen
+  useFocusEffect(
+    useCallback(() => {
+      const syncCounts = async () => {
+        const storedHistory = await AsyncStorage.getItem("historyLogs");
+        const historyArray = storedHistory ? JSON.parse(storedHistory) : [];
 
-const addToHistory = async (type) => {
-  try {
+        const tea = historyArray.filter(item => item.type === "tea").length;
+        const coffee = historyArray.filter(item => item.type === "coffee").length;
+
+        setTeaCount(tea);
+        setCoffeeCount(coffee);
+      };
+      syncCounts();
+    }, [])
+  );
+
+  // Add log entry
+  const addToHistory = async (type) => {
     const now = new Date();
+    const timeString = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const dateString = now.toISOString().split("T")[0];
 
-    const timeString = now.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const newEntry = { type, time: timeString, date: dateString };
 
-    const dateString = now.toISOString().split("T")[0]; // YYYY-MM-DD
-
-    const newEntry = {
-      type,
-      time: timeString,
-      date: dateString,
-    };
-
-    // Get existing logs
     const storedHistory = await AsyncStorage.getItem("historyLogs");
     let historyArray = storedHistory ? JSON.parse(storedHistory) : [];
 
-    // Add new entry at top
     historyArray.unshift(newEntry);
 
-    // Save back
+    await AsyncStorage.setItem("historyLogs", JSON.stringify(historyArray));
+  };
+
+  // Handle click
+  const addDrink = async (type) => {
+    await addToHistory(type);
+    
+    // Re-sync counts
+    const storedHistory = await AsyncStorage.getItem("historyLogs");
+    const historyArray = storedHistory ? JSON.parse(storedHistory) : [];
+    const tea = historyArray.filter(i => i.type === "tea").length;
+    const coffee = historyArray.filter(i => i.type === "coffee").length;
+
+    setTeaCount(tea);
+    setCoffeeCount(coffee);
+    setMood(getMood(tea + coffee));
+  };
+
+  // RESET only clears that drink’s logs
+  const resetCount = async (type) => {
+    const storedHistory = await AsyncStorage.getItem("historyLogs");
+    let historyArray = storedHistory ? JSON.parse(storedHistory) : [];
+
+    historyArray = historyArray.filter(item => item.type !== type);
+
     await AsyncStorage.setItem("historyLogs", JSON.stringify(historyArray));
 
-    console.log("HISTORY UPDATED →", historyArray);
+    if (type === "tea") setTeaCount(0);
+    else setCoffeeCount(0);
 
-  } catch (error) {
-    console.log("Error saving history entry:", error);
-  }
-};
-
-
-const addDrink = (type) => {
-  let newTea = teaCount;
-  let newCoffee = coffeeCount;
-
-  if (type === "tea") {
-    newTea += 1;
-  } else {
-    newCoffee += 1;
-  }
-
-  setTeaCount(newTea);
-  setCoffeeCount(newCoffee);
-  setMood(getMood(newTea + newCoffee));
-  saveCounts(newTea, newCoffee);
-
-  addToHistory(type);
-};
-
-const resetCount = async (type) => {
-  if (type === "tea") {
-    setTeaCount(0);
-    await AsyncStorage.setItem("teaCount", "0");
-  } else {
-    setCoffeeCount(0);
-    await AsyncStorage.setItem("coffeeCount", "0");
-  }
-};
-
-  useEffect(() => {
-    setMood(getMood(teaCount + coffeeCount));
-  }, [teaCount, coffeeCount]);
-
-// const logout = async () => {
-//   await AsyncStorage.multiRemove(["userEmail", "userPassword"]);
-//   navigation.replace("Auth");
-// };
+    setMood(getMood((type === "tea" ? coffeeCount : teaCount)));
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Toast Message */}
-
       {/* Header */}
       <View style={styles.header}>
         <View>
@@ -163,16 +123,10 @@ const resetCount = async (type) => {
           <Text style={styles.title}>Campus Chai Tracker ☕</Text>
         </View>
         <View style={styles.headerButtons}>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => navigation.navigate("Profile")}
-          >
+          <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
             <Text style={styles.iconText}>👤</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => navigation.navigate("About")}
-          >
+          <TouchableOpacity onPress={() => navigation.navigate("About")}>
             <Text style={styles.iconText}>ℹ️</Text>
           </TouchableOpacity>
         </View>
@@ -183,9 +137,7 @@ const resetCount = async (type) => {
       {/* Tea Card */}
       <View style={styles.card}>
         <Text style={styles.counterTitle}>🍵 Tea Tracker</Text>
-        <Text style={styles.counter}>
-          {teaCount} / {TEA_LIMIT}
-        </Text>
+        <Text style={styles.counter}>{teaCount} / {TEA_LIMIT}</Text>
 
         {teaCount > TEA_LIMIT && (
           <Text style={styles.warningBox}>
@@ -194,16 +146,10 @@ const resetCount = async (type) => {
         )}
 
         <View style={styles.cardButtons}>
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => addDrink("tea")}
-          >
+          <TouchableOpacity style={styles.addButton} onPress={() => addDrink("tea")}>
             <Text style={styles.addButtonText}>+ Add Tea</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.resetButton}
-            onPress={() => resetCount("tea")}
-          >
+          <TouchableOpacity style={styles.resetButton} onPress={() => resetCount("tea")}>
             <Text style={styles.resetButtonText}>Reset</Text>
           </TouchableOpacity>
         </View>
@@ -212,9 +158,7 @@ const resetCount = async (type) => {
       {/* Coffee Card */}
       <View style={styles.card}>
         <Text style={styles.counterTitle}>☕ Coffee Tracker</Text>
-        <Text style={styles.counter}>
-          {coffeeCount} / {COFFEE_LIMIT}
-        </Text>
+        <Text style={styles.counter}>{coffeeCount} / {COFFEE_LIMIT}</Text>
 
         {coffeeCount > COFFEE_LIMIT && (
           <Text style={styles.warningBox}>
@@ -223,25 +167,17 @@ const resetCount = async (type) => {
         )}
 
         <View style={styles.cardButtons}>
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => addDrink("coffee")}
-          >
+          <TouchableOpacity style={styles.addButton} onPress={() => addDrink("coffee")}>
             <Text style={styles.addButtonText}>+ Add Coffee</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.resetButton}
-            onPress={() => resetCount("coffee")}
-          >
+          <TouchableOpacity style={styles.resetButton} onPress={() => resetCount("coffee")}>
             <Text style={styles.resetButtonText}>Reset</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Mood */}
       <Text style={styles.moodText}>{mood}</Text>
 
-      {/* Quick Nav */}
       <View style={styles.quickNav}>
         <TouchableOpacity onPress={() => navigation.navigate("History")}>
           <Text style={styles.link}>📜 View History</Text>
@@ -250,184 +186,55 @@ const resetCount = async (type) => {
           <Text style={styles.link}>📊 View Stats</Text>
         </TouchableOpacity>
       </View>
-        
 
-      {/* Quote */}
       <View style={styles.quoteContainer}>
         <Text style={styles.quote}>💬 {quote}</Text>
       </View>
 
-      <Text style={styles.footer}>
-        Resets automatically every morning 🌅
-      </Text>
-      
-
-      {/* <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-        <Text style={styles.logoutText}>🚪 Logout</Text>
-      </TouchableOpacity> */}
-
+      <Text style={styles.footer}>Resets automatically every morning 🌅</Text>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "#FFF8F0",
-    padding: 20,
-    alignItems: "center",
-    flexGrow: 1,
-  },
-  header: {
-    width: "100%",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 40,
-  },
+  container: { backgroundColor: "#FFF8F0", padding: 20, alignItems: "center", flexGrow: 1 },
+  header: { width: "100%", flexDirection: "row", justifyContent: "space-between", marginTop: 40 },
   greeting: { fontSize: 16, color: "#6F4E37" },
   title: { fontSize: 20, fontWeight: "bold", color: "#6F4E37" },
-  headerButtons: { flexDirection: "row" },
-  iconButton: { marginLeft: 10 },
-  iconText: { fontSize: 24 },
+  iconText: { fontSize: 24, marginLeft: 12 },
   date: { color: "#8B6B4A", marginVertical: 10 },
-
-  card: {
-    backgroundColor: "#FFEEDB",
-    width: "90%",
-    padding: 20,
-    borderRadius: 15,
-    alignItems: "center",
-    marginVertical: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-  },
-  counterTitle: {
-    fontSize: 16,
-    color: "#8B6B4A",
-    marginBottom: 5,
-  },
-  counter: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#6F4E37",
-    marginBottom: 10,
-  },
-  warningBox: {
-    backgroundColor: "#FFD6C9",
-    color: "#B22222",
-    fontWeight: "600",
-    padding: 8,
-    borderRadius: 6,
-    width: "100%",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  cardButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-  },
-  addButton: {
-    flex: 1,
-    marginHorizontal: 5,
-    backgroundColor: "#6F4E37",
-    padding: 10,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  resetButton: {
-    flex: 1,
-    marginHorizontal: 5,
-    backgroundColor: "#D3C0A6",
-    padding: 10,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  addButtonText: {
-    color: "#fff",
-    fontSize: 15,
-    fontWeight: "bold",
-  },
-  resetButtonText: {
-    color: "#6F4E37",
-    fontSize: 15,
-    fontWeight: "bold",
-  },
-  toast: {
-    position: "absolute",
-    top: 20,
-    backgroundColor: "#6F4E37",
-    padding: 10,
-    borderRadius: 8,
-    zIndex: 100,
-  },
-  toastText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  moodText: {
-    fontSize: 16,
-    marginTop: 15,
-    color: "#A97142",
-    fontStyle: "italic",
-  },
-  quickNav: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "90%",
-    marginVertical: 15,
-  },
-  link: {
-    color: "#007AFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  quoteContainer: {
-    backgroundColor: "#FFF3E0",
-    padding: 12,
-    borderRadius: 10,
-    width: "90%",
-  },
-  quote: {
-    textAlign: "center",
-    color: "#6F4E37",
-    fontStyle: "italic",
-  },
-  footer: {
-    marginTop: 20,
-    fontSize: 12,
-    color: "#A97142",
-  },
-  logoutButton: {
-  marginTop: 20,
-  backgroundColor: "#D9534F",
-  padding: 12,
-  borderRadius: 10,
-  width: "90%",
+  card: { backgroundColor: "#FFEEDB", width: "90%", padding: 20, borderRadius: 15, marginVertical: 10 },
+  counterTitle: { fontSize: 16, color: "#8B6B4A" },
+  counter: { fontSize: 28, fontWeight: "bold", color: "#6F4E37", marginVertical: 10 },
+  warningBox: { backgroundColor: "#FFD6C9", color: "#B22222", padding: 8, borderRadius: 6, textAlign: "center" },
+  cardButtons: { flexDirection: "row", justifyContent: "space-between", width: "100%", marginTop: 10 },
+  addButton: { flex: 1, marginHorizontal: 5, backgroundColor: "#6F4E37", padding: 10, borderRadius: 8 },
+  resetButton: { flex: 1, marginHorizontal: 5, backgroundColor: "#D3C0A6", padding: 10, borderRadius: 8 },
+  addButtonText: { color: "#fff", fontSize: 15, fontWeight: "bold", textAlign: "center" },
+  resetButtonText: { color: "#6F4E37", fontSize: 15, fontWeight: "bold", textAlign: "center" },
+  moodText: { fontSize: 16, marginTop: 15, color: "#A97142", fontStyle: "italic" },
+  quickNav: { flexDirection: "row", justifyContent: "space-between", width: "90%", marginVertical: 15 },
+  link: { color: "#007AFF", fontSize: 16, fontWeight: "600" },
+  quoteContainer: { backgroundColor: "#FFF3E0", padding: 12, borderRadius: 10, width: "90%" },
+  quote: { textAlign: "center", color: "#6F4E37", fontStyle: "italic" },
+  footer: { marginTop: 20, fontSize: 12, color: "#A97142" },
+  headerButtons: {
+  flexDirection: "row",
   alignItems: "center",
+  gap: 12, // keeps even spacing
 },
-// logoutButton: {
-//   marginTop: 15,
-//   backgroundColor: "#7BA4CE ",   // warm chai-danger tone
-//   paddingVertical: 12,
-//   paddingHorizontal: 20,
-//   borderRadius: 12,
-//   alignItems: "center",
+headerIcon: {
+  backgroundColor: "#FFEEDB",
+  padding: 6,
+  borderRadius: 8,
+  justifyContent: "center",
+  alignItems: "center",
+  elevation: 2,
+},
 
-//   width: "60%",       // reduced width
-//   alignSelf: "center",
-//   shadowColor: "#000",
-//   shadowOpacity: 0.1,
-//   shadowRadius: 5,
-// },
-
-// logoutText: {
-//   color: "#FFF8F0",
-//   fontSize: 16,
-//   fontWeight: "700",
-// },
-
+iconText: {
+  fontSize: 20,
+  color: "#6F4E37",
+},
 
 });
