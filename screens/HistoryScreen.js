@@ -1,13 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState,useCallback  } from "react";
 import { View, Text, StyleSheet, SectionList, TouchableOpacity, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
+// import { useCallback } from "react";
 
 export default function HistoryScreen() {
   const [sectionedHistory, setSectionedHistory] = useState([]);
 
-  useEffect(() => {
+ useFocusEffect(
+  useCallback(() => {
     loadHistory();
-  }, []);
+  }, [])
+);
+
 
   const loadHistory = async () => {
     const storedHistory = await AsyncStorage.getItem("historyLogs");
