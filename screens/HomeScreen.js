@@ -28,11 +28,13 @@ export default function HomeScreen({ navigation }) {
     "A cup of tea makes everything better 🌿",
   ];
 
-const getToday = () => {
-  return new Date().toLocaleDateString("en-CA"); // format: YYYY-MM-DD using local time
-};
+  // Always use SAME format: YYYY-MM-DD (LOCAL DATE)
+  const getToday = () => {
+    const date = new Date();
+    return date.toLocaleDateString("en-CA");
+  };
 
-
+  // Greeting message
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return "Good Morning ☀️";
@@ -47,83 +49,87 @@ const getToday = () => {
     return "You might be 70% chai now 😜";
   };
 
-  // Load initial UI data
+  // Load on first screen mount
   useEffect(() => {
-    setToday(getToday());
-    setGreeting(getGreeting());
-    setQuote(quotes[Math.floor(Math.random() * quotes.length)]);
+    loadData();
   }, []);
 
-  // Sync count with history when coming back to HomeScreen
+  // Load whenever user returns to HomeScreen
   useFocusEffect(
     useCallback(() => {
-      const syncCounts = async () => {
-        const storedHistory = await AsyncStorage.getItem("historyLogs");
-        const historyArray = storedHistory ? JSON.parse(storedHistory) : [];
-
-        const tea = historyArray.filter(item => item.type === "tea").length;
-        const coffee = historyArray.filter(item => item.type === "coffee").length;
-
-        setTeaCount(tea);
-        setCoffeeCount(coffee);
-      };
-      syncCounts();
+      loadData();
     }, [])
   );
 
-  // Add log entry
+  // 🎯 Central Load Function (Handles reset + sync)
+  const loadData = async () => {
+    const todayDate = getToday();
+    setToday(todayDate);
+    setGreeting(getGreeting());
+    setQuote(quotes[Math.floor(Math.random() * quotes.length)]);
+
+    const storedDate = await AsyncStorage.getItem("chaiDate");
+
+    // First installation OR new day → reset today's count only
+    if (!storedDate || storedDate !== todayDate) {
+      await AsyncStorage.setItem("chaiDate", todayDate);
+      setTeaCount(0);
+      setCoffeeCount(0);
+      return;
+    }
+
+    // Load today's history counts
+    const storedHistory = await AsyncStorage.getItem("historyLogs");
+    const historyArray = storedHistory ? JSON.parse(storedHistory) : [];
+
+    const todayTea = historyArray.filter(
+      (item) => item.type === "tea" && item.date === todayDate
+    ).length;
+
+    const todayCoffee = historyArray.filter(
+      (item) => item.type === "coffee" && item.date === todayDate
+    ).length;
+
+    setTeaCount(todayTea);
+    setCoffeeCount(todayCoffee);
+    setMood(getMood(todayTea + todayCoffee));
+  };
+
+  // Add new entry
   const addToHistory = async (type) => {
     const now = new Date();
-    const timeString = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    const dateString = now.toISOString().split("T")[0];
-
-    const newEntry = { type, time: timeString, date: dateString };
+    const entry = {
+      type,
+      time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      date: getToday(), // FIXED: Always local date format
+    };
 
     const storedHistory = await AsyncStorage.getItem("historyLogs");
-    let historyArray = storedHistory ? JSON.parse(storedHistory) : [];
+    const historyArray = storedHistory ? JSON.parse(storedHistory) : [];
 
-    historyArray.unshift(newEntry);
-
+    historyArray.unshift(entry);
     await AsyncStorage.setItem("historyLogs", JSON.stringify(historyArray));
   };
 
-  // Handle click
+  // Add button handler
   const addDrink = async (type) => {
     await addToHistory(type);
-    
-    // Re-sync counts
-    const storedHistory = await AsyncStorage.getItem("historyLogs");
-    const historyArray = storedHistory ? JSON.parse(storedHistory) : [];
-    const tea = historyArray.filter(i => i.type === "tea").length;
-    const coffee = historyArray.filter(i => i.type === "coffee").length;
-
-    setTeaCount(tea);
-    setCoffeeCount(coffee);
-    setMood(getMood(tea + coffee));
+    loadData(); // Re-sync immediately
   };
 
-  // RESET only clears that drink’s logs
-const resetCount = async (type) => {
-  const storedHistory = await AsyncStorage.getItem("historyLogs");
-  let historyArray = storedHistory ? JSON.parse(storedHistory) : [];
+  // Reset for today ONLY
+  const resetCount = async (type) => {
+    const todayDate = getToday();
+    const storedHistory = await AsyncStorage.getItem("historyLogs");
+    let historyArray = storedHistory ? JSON.parse(storedHistory) : [];
 
-  const today = new Date().toISOString().split("T")[0];
+    historyArray = historyArray.filter(
+      (item) => !(item.type === type && item.date === todayDate)
+    );
 
-  // Remove entries of THIS drink type AND today's date only
-  historyArray = historyArray.filter(
-    (item) => !(item.type === type && item.date === today)
-  );
-
-  await AsyncStorage.setItem("historyLogs", JSON.stringify(historyArray));
-
-  // Update UI count only for today
-  if (type === "tea") {
-    setTeaCount(0);
-  } else {
-    setCoffeeCount(0);
-  }
-};
-
+    await AsyncStorage.setItem("historyLogs", JSON.stringify(historyArray));
+    loadData(); // Update UI
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -133,11 +139,19 @@ const resetCount = async (type) => {
           <Text style={styles.greeting}>{greeting}</Text>
           <Text style={styles.title}>Campus Chai Tracker ☕</Text>
         </View>
+
         <View style={styles.headerButtons}>
-          <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
+          <TouchableOpacity
+            style={styles.headerIcon}
+            onPress={() => navigation.navigate("Profile")}
+          >
             <Text style={styles.iconText}>👤</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate("About")}>
+
+          <TouchableOpacity
+            style={styles.headerIcon}
+            onPress={() => navigation.navigate("About")}
+          >
             <Text style={styles.iconText}>ℹ️</Text>
           </TouchableOpacity>
         </View>
@@ -212,40 +226,33 @@ const styles = StyleSheet.create({
   header: { width: "100%", flexDirection: "row", justifyContent: "space-between", marginTop: 40 },
   greeting: { fontSize: 16, color: "#6F4E37" },
   title: { fontSize: 20, fontWeight: "bold", color: "#6F4E37" },
-  iconText: { fontSize: 24, marginLeft: 12 },
   date: { color: "#8B6B4A", marginVertical: 10 },
+
+  headerButtons: { flexDirection: "row", alignItems: "center", gap: 10 },
+  headerIcon: {
+    backgroundColor: "#FFEEDB",
+    padding: 8,
+    borderRadius: 10,
+    elevation: 2,
+  },
+  iconText: { fontSize: 20, color: "#6F4E37" },
+
   card: { backgroundColor: "#FFEEDB", width: "90%", padding: 20, borderRadius: 15, marginVertical: 10 },
   counterTitle: { fontSize: 16, color: "#8B6B4A" },
   counter: { fontSize: 28, fontWeight: "bold", color: "#6F4E37", marginVertical: 10 },
   warningBox: { backgroundColor: "#FFD6C9", color: "#B22222", padding: 8, borderRadius: 6, textAlign: "center" },
+
   cardButtons: { flexDirection: "row", justifyContent: "space-between", width: "100%", marginTop: 10 },
   addButton: { flex: 1, marginHorizontal: 5, backgroundColor: "#6F4E37", padding: 10, borderRadius: 8 },
   resetButton: { flex: 1, marginHorizontal: 5, backgroundColor: "#D3C0A6", padding: 10, borderRadius: 8 },
   addButtonText: { color: "#fff", fontSize: 15, fontWeight: "bold", textAlign: "center" },
   resetButtonText: { color: "#6F4E37", fontSize: 15, fontWeight: "bold", textAlign: "center" },
+
   moodText: { fontSize: 16, marginTop: 15, color: "#A97142", fontStyle: "italic" },
   quickNav: { flexDirection: "row", justifyContent: "space-between", width: "90%", marginVertical: 15 },
   link: { color: "#007AFF", fontSize: 16, fontWeight: "600" },
+
   quoteContainer: { backgroundColor: "#FFF3E0", padding: 12, borderRadius: 10, width: "90%" },
   quote: { textAlign: "center", color: "#6F4E37", fontStyle: "italic" },
   footer: { marginTop: 20, fontSize: 12, color: "#A97142" },
-  headerButtons: {
-  flexDirection: "row",
-  alignItems: "center",
-  gap: 12, // keeps even spacing
-},
-headerIcon: {
-  backgroundColor: "#FFEEDB",
-  padding: 6,
-  borderRadius: 8,
-  justifyContent: "center",
-  alignItems: "center",
-  elevation: 2,
-},
-
-iconText: {
-  fontSize: 20,
-  color: "#6F4E37",
-},
-
 });
