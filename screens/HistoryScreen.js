@@ -1,86 +1,104 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, FlatList } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, SectionList } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect } from "@react-navigation/native";
 
 export default function HistoryScreen() {
-  const [history, setHistory] = useState([]);
+  const [sectionedHistory, setSectionedHistory] = useState([]);
+
+  useEffect(() => {
+    loadHistory();
+  }, []);
 
   const loadHistory = async () => {
-    try {
-      const storedHistory = await AsyncStorage.getItem("historyLogs");
-      setHistory(storedHistory ? JSON.parse(storedHistory) : []);
-    } catch (error) {
-      console.log("Error loading history:", error);
-    }
+    const storedHistory = await AsyncStorage.getItem("historyLogs");
+    const historyArray = storedHistory ? JSON.parse(storedHistory) : [];
+
+    // Group by date
+    const grouped = historyArray.reduce((acc, item) => {
+      if (!acc[item.date]) acc[item.date] = [];
+      acc[item.date].push(item);
+      return acc;
+    }, {});
+
+    // Convert into SectionList data format
+    const sectionData = Object.keys(grouped).map((date) => ({
+      title: date,
+      data: grouped[date],
+    }));
+
+    setSectionedHistory(sectionData);
   };
-
-  useFocusEffect(
-    React.useCallback(() => {
-      loadHistory();
-    }, [])
-  );
-
-  const renderItem = ({ item }) => (
-    <View style={styles.item}>
-      <Text style={styles.type}>
-        {item.type === "tea" ? "🍵 Tea" : "☕ Coffee"}
-      </Text>
-      <Text style={styles.meta}>
-        {item.time} • {item.date}
-      </Text>
-    </View>
-  );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>📜 History</Text>
+      <Text style={styles.header}>📜 History</Text>
 
-      <FlatList
-        data={history}
-        renderItem={renderItem}
-        keyExtractor={(_, index) => index.toString()}
-        contentContainerStyle={{ paddingBottom: 50 }}
-        ListEmptyComponent={
-          <Text style={styles.empty}>No history yet...</Text>
-        }
-      />
+      {sectionedHistory.length === 0 ? (
+        <Text style={styles.noData}>No records yet...</Text>
+      ) : (
+        <SectionList
+          sections={sectionedHistory}
+          keyExtractor={(item, index) => index.toString()}
+          renderSectionHeader={({ section }) => (
+            <Text style={styles.sectionHeader}>📅 {section.title}</Text>
+          )}
+          renderItem={({ item }) => (
+            <View style={styles.itemRow}>
+              <Text style={styles.itemType}>
+                {item.type === "tea" ? "🍵 Tea" : "☕ Coffee"}
+              </Text>
+              <Text style={styles.itemTime}>{item.time}</Text>
+            </View>
+          )}
+          contentContainerStyle={{ paddingBottom: 20 }}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 15,
-    backgroundColor: "#FFF8F0",
     flex: 1,
+    backgroundColor: "#FFF8F0",
+    padding: 15,
   },
-  title: {
+  header: {
     fontSize: 22,
     fontWeight: "bold",
     marginTop: 40,
     marginBottom: 20,
-    color: "#6F4E37",
     textAlign: "center",
+    color: "#6F4E37",
   },
-  item: {
+  sectionHeader: {
     backgroundColor: "#FFEEDB",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
-  },
-  type: {
-    fontSize: 18,
-    fontWeight: "600",
+    padding: 8,
+    borderRadius: 8,
+    fontSize: 16,
+    fontWeight: "bold",
     color: "#6F4E37",
+    marginTop: 10,
   },
-  meta: {
-    color: "#8B6B4A",
-    marginTop: 4,
+  itemRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 6,
+    marginHorizontal: 6,
+    borderBottomWidth: 0.4,
+    borderColor: "#D7C1A0",
   },
-  empty: {
+  itemType: {
+    fontSize: 16,
+  },
+  itemTime: {
+    fontSize: 16,
+    color: "#555",
+  },
+  noData: {
+    marginTop: 30,
     textAlign: "center",
-    marginTop: 20,
-    color: "#6F4E37",
+    fontSize: 16,
+    color: "#A97142",
   },
 });
