@@ -28,7 +28,10 @@ export default function HomeScreen({ navigation }) {
     "A cup of tea makes everything better 🌿",
   ];
 
-  const getToday = () => new Date().toISOString().split("T")[0];
+const getToday = () => {
+  return new Date().toLocaleDateString("en-CA"); // format: YYYY-MM-DD using local time
+};
+
 
   const getGreeting = () => {
     const hour = new Date().getHours();
