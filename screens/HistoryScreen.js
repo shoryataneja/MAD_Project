@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, SectionList } from "react-native";
+import { View, Text, StyleSheet, SectionList, TouchableOpacity, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function HistoryScreen() {
@@ -13,20 +13,48 @@ export default function HistoryScreen() {
     const storedHistory = await AsyncStorage.getItem("historyLogs");
     const historyArray = storedHistory ? JSON.parse(storedHistory) : [];
 
-    // Group by date
     const grouped = historyArray.reduce((acc, item) => {
       if (!acc[item.date]) acc[item.date] = [];
       acc[item.date].push(item);
       return acc;
     }, {});
 
-    // Convert into SectionList data format
     const sectionData = Object.keys(grouped).map((date) => ({
       title: date,
       data: grouped[date],
     }));
 
     setSectionedHistory(sectionData);
+  };
+
+  // 🗑 Delete Function
+  const deleteEntry = (sectionIndex, itemIndex) => {
+    Alert.alert(
+      "Delete Entry",
+      "Are you sure you want to delete this history record?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            let updatedSections = [...sectionedHistory];
+            
+            // Remove item
+            updatedSections[sectionIndex].data.splice(itemIndex, 1);
+
+            // Remove section if empty
+            updatedSections = updatedSections.filter(sec => sec.data.length > 0);
+
+            setSectionedHistory(updatedSections);
+
+            // Save back to AsyncStorage (flatten first)
+            const flatData = updatedSections.flatMap(section => section.data);
+            await AsyncStorage.setItem("historyLogs", JSON.stringify(flatData));
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -42,15 +70,22 @@ export default function HistoryScreen() {
           renderSectionHeader={({ section }) => (
             <Text style={styles.sectionHeader}>📅 {section.title}</Text>
           )}
-          renderItem={({ item }) => (
-            <View style={styles.itemRow}>
-              <Text style={styles.itemType}>
-                {item.type === "tea" ? "🍵 Tea" : "☕ Coffee"}
-              </Text>
-              <Text style={styles.itemTime}>{item.time}</Text>
-            </View>
-          )}
-          contentContainerStyle={{ paddingBottom: 20 }}
+          renderItem={({ item, index, section }) => {
+            const sectionIndex = sectionedHistory.findIndex(s => s.title === section.title);
+
+            return (
+              <TouchableOpacity
+                onLongPress={() => deleteEntry(sectionIndex, index)}
+              >
+                <View style={styles.itemRow}>
+                  <Text style={styles.itemType}>
+                    {item.type === "tea" ? "🍵 Tea" : "☕ Coffee"}
+                  </Text>
+                  <Text style={styles.itemTime}>{item.time}</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          }}
         />
       )}
     </View>
