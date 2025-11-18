@@ -124,23 +124,27 @@ export default function StatsScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#FFF8F0",
-    flex: 1,
-    paddingTop: 60,
-    alignItems: "center",
-  },
+  backgroundColor: "#FFF8F0",
+  padding: 20,
+  paddingTop: 60,   // ⬅️ add this line or increase value
+  alignItems: "center",
+  flexGrow: 1,
+},
   header: {
     fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 10,
+    marginTop: 40,
+    marginBottom: 20,
     color: "#6F4E37",
   },
   card: {
     backgroundColor: "#FFEEDB",
-    width: "90%",
+    height: 100,
+    width: 250,
     padding: 18,
     borderRadius: 15,
     marginVertical: 10,
+  
   },
   cardTitle: {
     fontSize: 17,
