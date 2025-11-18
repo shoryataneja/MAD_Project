@@ -1,7 +1,9 @@
 import React, { useState, useCallback } from "react";
-import { View, Text, StyleSheet, FlatList } from "react-native";
+import { View, Text, StyleSheet, FlatList,ScrollView } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
+import { BarChart } from "react-native-chart-kit";
+
 
 const TEA_LIMIT = 5;
 const COFFEE_LIMIT = 3;
@@ -107,21 +109,50 @@ export default function StatsScreen() {
     </View>
   );
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.header}>📊 Stats</Text>
+return (
 
-      <FlatList
-        data={statsData}
-        keyExtractor={(item) => item.id}
-        renderItem={renderCard}
-        contentContainerStyle={{ alignItems: "center", paddingBottom: 40 }}
-        showsVerticalScrollIndicator={false}
-      />
-    </View>
-  );
+  <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+    <Text style={styles.header}>📊 Stats</Text>
+
+    <FlatList
+      data={statsData}
+      keyExtractor={(item) => item.id}
+      renderItem={renderCard}
+      contentContainerStyle={{ alignItems: "center", paddingBottom: 20 }}
+      showsVerticalScrollIndicator={false}
+    />
+
+    {/* 📈 Simple Bar Chart */}
+    {weekStats.tea + weekStats.coffee > 0 && (
+      <View style={styles.chartContainer}>
+        <Text style={styles.chartTitle}>Weekly Consumption Chart</Text>
+        <BarChart
+          data={{
+            labels: ["Tea", "Coffee"],
+            datasets: [{ data: [weekStats.tea, weekStats.coffee] }],
+          }}
+          width={300}
+          height={200}
+          fromZero
+          showValuesOnTopOfBars
+          withInnerLines={false}
+          chartConfig={{
+            backgroundColor: "#FFEEDB",
+            backgroundGradientFrom: "#FFEEDB",
+            backgroundGradientTo: "#FFEEDB",
+            decimalPlaces: 0,
+            color: () => "#6F4E37",
+            labelColor: () => "#6F4E37",
+            barPercentage: 0.6,
+          }}
+          style={styles.chartStyle}
+        />
+      </View>
+    )}
+  </ScrollView>
+);
+
 }
-
 const styles = StyleSheet.create({
   container: {
   backgroundColor: "#FFF8F0",
@@ -157,4 +188,22 @@ const styles = StyleSheet.create({
     color: "#8B6B4A",
     marginVertical: 2,
   },
+  chartContainer: {
+  marginTop: 10,
+  backgroundColor: "#FFEEDB",
+  paddingVertical: 20,
+  paddingHorizontal: 10,
+  borderRadius: 15,
+  alignItems: "center",
+  width: "92%",
+},
+chartTitle: {
+  fontSize: 17,
+  fontWeight: "600",
+  color: "#6F4E37",
+  marginBottom: 10,
+},
+chartStyle: {
+  borderRadius: 15,
+}
 });
