@@ -230,7 +230,6 @@ const styles = StyleSheet.create({
 
   headerButtons: { flexDirection: "row", alignItems: "center", gap: 10 },
   headerIcon: {
-    backgroundColor: "#FFEEDB",
     padding: 8,
     borderRadius: 10,
     elevation: 2,
