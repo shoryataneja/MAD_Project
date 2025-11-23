@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function ProfileScreen() {
@@ -19,7 +19,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Profile</Text>
 
       {/* Avatar */}
@@ -33,33 +33,65 @@ export default function ProfileScreen() {
       <Text style={styles.name}>{name}</Text>
       <Text style={styles.email}>{email}</Text>
 
-      {/* Edit Profile Placeholder */}
+      {/* Edit Profile */}
       <TouchableOpacity style={styles.editButton}>
         <Text style={styles.editText}>Edit Profile</Text>
       </TouchableOpacity>
 
-    </View>
+      {/* Preferences Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Preferences</Text>
+
+        <View style={styles.prefRow}>
+          <Text style={styles.prefLabel}>Daily Tea Limit</Text>
+          <Text style={styles.prefValue}>5 cups</Text>
+        </View>
+
+        <View style={styles.prefRow}>
+          <Text style={styles.prefLabel}>Daily Coffee Limit</Text>
+          <Text style={styles.prefValue}>3 cups</Text>
+        </View>
+      </View>
+
+      {/* App Settings */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>App Settings</Text>
+
+        <TouchableOpacity style={styles.settingRow}>
+          <Text style={styles.settingLabel}>Theme</Text>
+          <Text style={styles.settingValue}>Default</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.settingRow}>
+          <Text style={styles.settingLabel}>Notifications</Text>
+          <Text style={styles.settingValue}>Coming Soon</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={{ height: 30 }} />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: "#FFF8F0",
+    padding: 20,
     alignItems: "center",
-    paddingTop: 60,
+    flexGrow: 1
   },
 
   title: {
     fontSize: 22,
     fontWeight: "bold",
     color: "#6F4E37",
-    marginBottom: 20,
+    marginTop: 40,
+    marginBottom: 15,
   },
 
   avatarCircle: {
-    width: 90,
-    height: 90,
+    width: 85,
+    height: 85,
     borderRadius: 45,
     backgroundColor: "#E5D3C5",
     justifyContent: "center",
@@ -68,7 +100,7 @@ const styles = StyleSheet.create({
   },
 
   avatarInitial: {
-    fontSize: 36,
+    fontSize: 34,
     fontWeight: "bold",
     color: "#6F4E37",
   },
@@ -91,12 +123,59 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 25,
     borderRadius: 10,
-    marginTop: 10,
+    marginBottom: 25,
   },
 
   editText: {
     color: "white",
     fontSize: 16,
     fontWeight: "600",
+  },
+
+  section: {
+    backgroundColor: "#FFEEDB",
+    width: "100%",
+    padding: 18,
+    borderRadius: 15,
+    marginBottom: 20,
+  },
+
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: "600",
+    color: "#6F4E37",
+    marginBottom: 10,
+  },
+
+  prefRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginVertical: 5,
+  },
+
+  prefLabel: {
+    fontSize: 15,
+    color: "#6F4E37",
+  },
+
+  prefValue: {
+    fontSize: 15,
+    color: "#8B6B4A",
+  },
+
+  settingRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginVertical: 8,
+  },
+
+  settingLabel: {
+    fontSize: 15,
+    color: "#6F4E37",
+  },
+
+  settingValue: {
+    fontSize: 15,
+    color: "#8B6B4A",
   },
 });
