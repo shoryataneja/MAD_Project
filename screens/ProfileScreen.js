@@ -44,6 +44,44 @@ export default function ProfileScreen() {
     setEditingField(null);
   };
 
+  const resetAllData = async () => {
+  Alert.alert(
+    "Reset Everything?",
+    "This will clear all history, counts, and limits. You cannot undo this.",
+    [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Reset",
+        style: "destructive",
+        onPress: async () => {
+          await AsyncStorage.multiRemove([
+            "historyLogs",
+            "chaiDate",
+            "dailyTeaLimit",
+            "dailyCoffeeLimit",
+            "teaCount",
+            "coffeeCount"
+          ]);
+
+          setTeaLimit(5);
+          setCoffeeLimit(3);
+
+          Alert.alert("Reset Successful", "All app data cleared.");
+        }
+      }
+    ]
+  );
+};
+
+
+const logoutUser = async () => {
+  await AsyncStorage.removeItem("isLoggedIn");
+
+  // navigate back to Auth screen
+  navigation.replace("Auth");
+};
+
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Profile</Text>
@@ -131,6 +169,23 @@ export default function ProfileScreen() {
   </View>
 )}
 
+{/* RESET ALL DATA */}
+<TouchableOpacity
+  style={styles.resetAllButton}
+  onPress={() => resetAllData()}
+>
+  <Text style={styles.resetAllText}>Reset All Data</Text>
+</TouchableOpacity>
+
+{/* LOGOUT BUTTON */}
+<TouchableOpacity
+  style={styles.logoutButton}
+  onPress={() => logoutUser()}
+>
+  <Text style={styles.logoutText}>Logout</Text>
+</TouchableOpacity>
+
+
     </ScrollView>
   );
 }
@@ -217,5 +272,33 @@ input: {
   borderWidth: 1,
   borderColor: "#d1c0a3",
 },
+resetAllButton: {
+  width: "90%",
+  backgroundColor: "#D9534F",
+  padding: 12,
+  borderRadius: 10,
+  marginTop: 10,
+  alignItems: "center"
+},
+resetAllText: {
+  color: "white",
+  fontSize: 16,
+  fontWeight: "600"
+},
+logoutButton: {
+  width: "90%",
+  backgroundColor: "#6F4E37",
+  padding: 12,
+  borderRadius: 10,
+  marginTop: 15,
+  marginBottom: 30,
+  alignItems: "center"
+},
+logoutText: {
+  color: "white",
+  fontSize: 16,
+  fontWeight: "600"
+}
+
 
 });
