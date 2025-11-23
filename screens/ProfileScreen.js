@@ -185,6 +185,14 @@ const logoutUser = async () => {
   <Text style={styles.logoutText}>Logout</Text>
 </TouchableOpacity>
 
+<TouchableOpacity
+  onPress={() => navigation.navigate("Home")}
+  style={styles.homeButton}
+>
+  <Text style={{ fontSize: 28 }}>🏠</Text>
+</TouchableOpacity>
+
+
 
     </ScrollView>
   );
@@ -298,7 +306,14 @@ logoutText: {
   color: "white",
   fontSize: 16,
   fontWeight: "600"
-}
+},
+homeButton: {
+  position: "absolute",
+  right: 20,
+  top: 80, 
+  zIndex: 10,
+  padding: 6,
+},
 
 
 });
