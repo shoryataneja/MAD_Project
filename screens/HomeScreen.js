@@ -17,8 +17,9 @@ export default function HomeScreen({ navigation }) {
   const [quote, setQuote] = useState("");
   const [mood, setMood] = useState("");
 
-  const TEA_LIMIT = 5;
-  const COFFEE_LIMIT = 3;
+  // Dynamic limits
+  const [teaLimit, setTeaLimit] = useState(5);
+  const [coffeeLimit, setCoffeeLimit] = useState(3);
 
   const quotes = [
     "Life happens, chai helps ☕",
@@ -28,13 +29,8 @@ export default function HomeScreen({ navigation }) {
     "A cup of tea makes everything better 🌿",
   ];
 
-  // Always use SAME format: YYYY-MM-DD (LOCAL DATE)
-  const getToday = () => {
-    const date = new Date();
-    return date.toLocaleDateString("en-CA");
-  };
+  const getToday = () => new Date().toLocaleDateString("en-CA");
 
-  // Greeting message
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return "Good Morning ☀️";
@@ -49,28 +45,22 @@ export default function HomeScreen({ navigation }) {
     return "You might be 70% chai now 😜";
   };
 
-  // Load on first screen mount
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  // Load whenever user returns to HomeScreen
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [])
-  );
-
-  // 🎯 Central Load Function (Handles reset + sync)
+  // Load limits + today's data
   const loadData = async () => {
     const todayDate = getToday();
     setToday(todayDate);
     setGreeting(getGreeting());
     setQuote(quotes[Math.floor(Math.random() * quotes.length)]);
 
+    // Load limits
+    const savedTeaLimit = await AsyncStorage.getItem("dailyTeaLimit");
+    const savedCoffeeLimit = await AsyncStorage.getItem("dailyCoffeeLimit");
+
+    if (savedTeaLimit) setTeaLimit(parseInt(savedTeaLimit));
+    if (savedCoffeeLimit) setCoffeeLimit(parseInt(savedCoffeeLimit));
+
     const storedDate = await AsyncStorage.getItem("chaiDate");
 
-    // First installation OR new day → reset today's count only
     if (!storedDate || storedDate !== todayDate) {
       await AsyncStorage.setItem("chaiDate", todayDate);
       setTeaCount(0);
@@ -78,7 +68,7 @@ export default function HomeScreen({ navigation }) {
       return;
     }
 
-    // Load today's history counts
+    // Load today's counts
     const storedHistory = await AsyncStorage.getItem("historyLogs");
     const historyArray = storedHistory ? JSON.parse(storedHistory) : [];
 
@@ -95,13 +85,22 @@ export default function HomeScreen({ navigation }) {
     setMood(getMood(todayTea + todayCoffee));
   };
 
-  // Add new entry
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [])
+  );
+
   const addToHistory = async (type) => {
     const now = new Date();
     const entry = {
       type,
       time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      date: getToday(), // FIXED: Always local date format
+      date: getToday(),
     };
 
     const storedHistory = await AsyncStorage.getItem("historyLogs");
@@ -111,13 +110,11 @@ export default function HomeScreen({ navigation }) {
     await AsyncStorage.setItem("historyLogs", JSON.stringify(historyArray));
   };
 
-  // Add button handler
   const addDrink = async (type) => {
     await addToHistory(type);
-    loadData(); // Re-sync immediately
+    loadData();
   };
 
-  // Reset for today ONLY
   const resetCount = async (type) => {
     const todayDate = getToday();
     const storedHistory = await AsyncStorage.getItem("historyLogs");
@@ -128,12 +125,11 @@ export default function HomeScreen({ navigation }) {
     );
 
     await AsyncStorage.setItem("historyLogs", JSON.stringify(historyArray));
-    loadData(); // Update UI
+    loadData();
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>{greeting}</Text>
@@ -162,9 +158,9 @@ export default function HomeScreen({ navigation }) {
       {/* Tea Card */}
       <View style={styles.card}>
         <Text style={styles.counterTitle}>🍵 Tea Tracker</Text>
-        <Text style={styles.counter}>{teaCount} / {TEA_LIMIT}</Text>
+        <Text style={styles.counter}>{teaCount} / {teaLimit}</Text>
 
-        {teaCount > TEA_LIMIT && (
+        {teaCount > teaLimit && (
           <Text style={styles.warningBox}>
             ⚠️ You’ve crossed your chai limit! Drink some water 💧
           </Text>
@@ -183,9 +179,9 @@ export default function HomeScreen({ navigation }) {
       {/* Coffee Card */}
       <View style={styles.card}>
         <Text style={styles.counterTitle}>☕ Coffee Tracker</Text>
-        <Text style={styles.counter}>{coffeeCount} / {COFFEE_LIMIT}</Text>
+        <Text style={styles.counter}>{coffeeCount} / {coffeeLimit}</Text>
 
-        {coffeeCount > COFFEE_LIMIT && (
+        {coffeeCount > coffeeLimit && (
           <Text style={styles.warningBox}>
             ⚡ Too much caffeine! Drink Some water 💧!
           </Text>
@@ -229,11 +225,7 @@ const styles = StyleSheet.create({
   date: { color: "#8B6B4A", marginVertical: 10 },
 
   headerButtons: { flexDirection: "row", alignItems: "center", gap: 10 },
-  headerIcon: {
-    padding: 8,
-    borderRadius: 10,
-    elevation: 2,
-  },
+  headerIcon: { padding: 8, borderRadius: 10 },
   iconText: { fontSize: 20, color: "#6F4E37" },
 
   card: { backgroundColor: "#FFEEDB", width: "90%", padding: 20, borderRadius: 15, marginVertical: 10 },
