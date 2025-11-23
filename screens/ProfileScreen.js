@@ -1,153 +1,102 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, TextInput } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export default function ProfileScreen({ navigation }) {
+export default function ProfileScreen() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-  const [editing, setEditing] = useState(false);
 
-  // Load profile info on mount
   useEffect(() => {
-    loadUserInfo();
+    loadUserData();
   }, []);
 
-  const loadUserInfo = async () => {
-    const storedEmail = await AsyncStorage.getItem("userEmail");
-    const storedName = await AsyncStorage.getItem("userName");
-    if (storedEmail) setEmail(storedEmail);
-    if (storedName) setName(storedName);
-  };
+  const loadUserData = async () => {
+    const savedEmail = await AsyncStorage.getItem("userEmail");
+    const savedName = await AsyncStorage.getItem("userName");
 
-  const saveName = async () => {
-    await AsyncStorage.setItem("userName", name);
-    setEditing(false);
-  };
-
-  // Logout → remove login details
-  const logout = async () => {
-    await AsyncStorage.multiRemove(["userEmail", "userPassword"]);
-    navigation.replace("Auth"); // go back to login screen
+    setEmail(savedEmail || "Not Provided");
+    setName(savedName || "User");
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>👤 Profile</Text>
+      <Text style={styles.title}>Profile</Text>
 
-      {/* Card Container */}
-      <View style={styles.card}>
-        <Text style={styles.label}>Email</Text>
-        <Text style={styles.value}>{email}</Text>
-
-        <Text style={styles.label}>Name</Text>
-
-        {editing ? (
-          <TextInput
-            style={styles.input}
-            value={name}
-            onChangeText={(t) => setName(t)}
-            placeholder="Enter your name"
-          />
-        ) : (
-          <Text style={styles.value}>{name || "Not set"}</Text>
-        )}
-
-        <TouchableOpacity
-          style={styles.editButton}
-          onPress={() => (editing ? saveName() : setEditing(true))}
-        >
-          <Text style={styles.editButtonText}>
-            {editing ? "Save" : "Edit Name"}
-          </Text>
-        </TouchableOpacity>
+      {/* Avatar */}
+      <View style={styles.avatarCircle}>
+        <Text style={styles.avatarInitial}>
+          {name ? name.charAt(0).toUpperCase() : "U"}
+        </Text>
       </View>
 
-      {/* Logout Button */}
-      <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-        <Text style={styles.logoutText}>🚪 Logout</Text>
+      {/* User Info */}
+      <Text style={styles.name}>{name}</Text>
+      <Text style={styles.email}>{email}</Text>
+
+      {/* Edit Profile Placeholder */}
+      <TouchableOpacity style={styles.editButton}>
+        <Text style={styles.editText}>Edit Profile</Text>
       </TouchableOpacity>
+
     </View>
   );
 }
-
-// ------------------ STYLES ------------------
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFF8F0",
+    alignItems: "center",
     paddingTop: 60,
-    paddingHorizontal: 20,
   },
 
-  header: {
-    fontSize: 24,
+  title: {
+    fontSize: 22,
     fontWeight: "bold",
     color: "#6F4E37",
-    textAlign: "center",
     marginBottom: 20,
   },
 
-  card: {
-    backgroundColor: "#FFEEDB",
-    padding: 20,
-    borderRadius: 15,
-    width: "100%",
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 5,
+  avatarCircle: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: "#E5D3C5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 15,
   },
 
-  label: {
-    fontSize: 14,
-    color: "#8B6B4A",
-    marginTop: 10,
-  },
-
-  value: {
-    fontSize: 16,
+  avatarInitial: {
+    fontSize: 36,
+    fontWeight: "bold",
     color: "#6F4E37",
-    marginBottom: 5,
-    fontWeight: "600",
   },
 
-  input: {
-    backgroundColor: "#FFF",
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 15,
-    borderColor: "#D7C1A0",
-    borderWidth: 1,
+  name: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#6F4E37",
     marginTop: 5,
-    marginBottom: 10,
+  },
+
+  email: {
+    fontSize: 15,
+    color: "#8B6B4A",
+    marginBottom: 20,
   },
 
   editButton: {
     backgroundColor: "#6F4E37",
-    padding: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 25,
     borderRadius: 10,
     marginTop: 10,
-    alignItems: "center",
   },
 
-  editButtonText: {
-    color: "#FFF",
+  editText: {
+    color: "white",
     fontSize: 16,
     fontWeight: "600",
-  },
-
-  logoutButton: {
-    backgroundColor: "#D9534F",
-    padding: 14,
-    borderRadius: 12,
-    marginTop: 30,
-    alignItems: "center",
-    width: "100%",
-  },
-
-  logoutText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "700",
   },
 });
