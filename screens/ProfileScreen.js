@@ -8,6 +8,8 @@ import {
   TextInput,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Icon } from "react-native-paper";
+
 
 export default function ProfileScreen({ navigation }) {
   const [email, setEmail] = useState("");
@@ -61,7 +63,7 @@ export default function ProfileScreen({ navigation }) {
   style={styles.homeBtn}
   onPress={() => navigation.navigate("Main", { screen: "Home" })}
 >
-  <Text style={{ fontSize: 24 }}>🏠</Text>
+  <Icon source="home-outline" size={28} color="#6F4E37" />
 </TouchableOpacity>
 
 
