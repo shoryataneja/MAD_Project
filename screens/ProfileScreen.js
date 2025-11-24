@@ -57,12 +57,13 @@ export default function ProfileScreen({ navigation }) {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {/* HOME NAV BUTTON */}
-      <TouchableOpacity
-        style={styles.homeBtn}
-        onPress={() => navigation.navigate("Home")}
-      >
-        <Text style={{ fontSize: 24 }}>🏠</Text>
-      </TouchableOpacity>
+    <TouchableOpacity
+  style={styles.homeBtn}
+  onPress={() => navigation.navigate("Main", { screen: "Home" })}
+>
+  <Text style={{ fontSize: 24 }}>🏠</Text>
+</TouchableOpacity>
+
 
       <Text style={styles.title}>Profile</Text>
 
