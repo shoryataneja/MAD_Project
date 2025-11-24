@@ -7,6 +7,7 @@ import {
   ScrollView,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Icon } from "react-native-paper";
 import { useFocusEffect } from "@react-navigation/native";
 
 export default function HomeScreen({ navigation }) {
@@ -141,14 +142,16 @@ export default function HomeScreen({ navigation }) {
             style={styles.headerIcon}
             onPress={() => navigation.navigate("Profile")}
           >
-            <Text style={styles.iconText}>👤</Text>
+            <Icon source="account-circle-outline" size={32} color="#6F4E37" />
+
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.headerIcon}
             onPress={() => navigation.navigate("About")}
           >
-            <Text style={styles.iconText}>ℹ️</Text>
+            <Icon source="information-outline" size={32} color="#6F4E37" />
+
           </TouchableOpacity>
         </View>
       </View>
@@ -157,13 +160,18 @@ export default function HomeScreen({ navigation }) {
 
       {/* Tea Card */}
       <View style={styles.card}>
-        <Text style={styles.counterTitle}>🍵 Tea Tracker</Text>
+        <Text style={styles.counterTitle}>
+  <Icon source="tea" size={18} color="#6F4E37" /> Tea Tracker
+</Text>
+
         <Text style={styles.counter}>{teaCount} / {teaLimit}</Text>
 
         {teaCount > teaLimit && (
           <Text style={styles.warningBox}>
-            ⚠️ You’ve crossed your chai limit! Drink some water 💧
-          </Text>
+  <Icon source="alert-circle-outline" size={15} color="#B22222" /> 
+  You’ve crossed your chai limit! 
+</Text>
+
         )}
 
         <View style={styles.cardButtons}>
@@ -178,13 +186,18 @@ export default function HomeScreen({ navigation }) {
 
       {/* Coffee Card */}
       <View style={styles.card}>
-        <Text style={styles.counterTitle}>☕ Coffee Tracker</Text>
+        <Text style={styles.counterTitle}>
+  <Icon source="coffee-outline" size={20} color="#6F4E37" /> Coffee Tracker
+</Text>
+
         <Text style={styles.counter}>{coffeeCount} / {coffeeLimit}</Text>
 
         {coffeeCount > coffeeLimit && (
           <Text style={styles.warningBox}>
-            ⚡ Too much caffeine! Drink Some water 💧!
-          </Text>
+  <Icon source="alert-circle-outline" size={15} color="#B22222" /> 
+  Too Much Caffeine!
+</Text>
+
         )}
 
         <View style={styles.cardButtons}>
@@ -201,18 +214,30 @@ export default function HomeScreen({ navigation }) {
 
       <View style={styles.quickNav}>
         <TouchableOpacity onPress={() => navigation.navigate("History")}>
-          <Text style={styles.link}>📜 View History</Text>
+          <Text style={styles.link}>
+        <Icon source="history" size={22} color="#007AFF" />  View History
+          </Text>
+
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Stats")}>
-          <Text style={styles.link}>📊 View Stats</Text>
+          <Text style={styles.link}>
+            <Icon source="chart-bar" size={22} color="#007AFF" />  View Stats
+          </Text>
+
         </TouchableOpacity>
       </View>
 
       <View style={styles.quoteContainer}>
-        <Text style={styles.quote}>💬 {quote}</Text>
+        <Text style={styles.quote}>
+          <Icon source="message-text-outline" size={14} color="#6F4E37" />  {quote}
+        </Text>
+
       </View>
 
-      <Text style={styles.footer}>Resets automatically every morning 🌅</Text>
+      <Text style={styles.footer}>
+  Resets automatically every morning <Icon source="weather-sunset" size={24} color="#A97142" />
+      </Text>
+
     </ScrollView>
   );
 }
