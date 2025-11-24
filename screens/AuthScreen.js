@@ -8,6 +8,8 @@ const AuthScreen = ({ navigation }) => {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
+  
+
   const handleAuth = async () => {
     setMessage("");
 

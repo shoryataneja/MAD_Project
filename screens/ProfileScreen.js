@@ -78,6 +78,17 @@ export default function ProfileScreen({ navigation }) {
 };
 
 
+const handleLogout = async () => {
+  // Remove login session only
+  await AsyncStorage.removeItem("isLoggedIn");
+
+  navigation.reset({
+    index: 0,
+    routes: [{ name: "Auth" }],
+  });
+};
+
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {/* HOME NAV BUTTON */}
@@ -172,9 +183,10 @@ export default function ProfileScreen({ navigation }) {
 
       {/* --- RESET + LOGOUT --- */}
 
-      <TouchableOpacity style={styles.logoutBtn}>
-        <Text style={styles.logoutText}>Logout</Text>
-      </TouchableOpacity>
+<TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+  <Text style={styles.logoutText}>Logout</Text>
+</TouchableOpacity>
+
 
 <TouchableOpacity
   style={styles.deleteBtn}
