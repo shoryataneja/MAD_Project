@@ -9,6 +9,8 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Icon } from "react-native-paper";
+import { Alert } from "react-native";
+
 
 
 export default function ProfileScreen({ navigation }) {
@@ -55,6 +57,26 @@ export default function ProfileScreen({ navigation }) {
     setEditingField(null);
     setInputValue("");
   };
+
+  const resetAllData = async () => {
+  try {
+    await AsyncStorage.multiRemove([
+      "userName",
+      "userEmail",
+      "dailyTeaLimit",
+      "dailyCoffeeLimit",
+      "chaiDate",
+      "historyLogs",
+    ]);
+
+    alert("All data reset! You will be logged out.");
+
+    navigation.replace("Auth"); // go back to login
+  } catch (error) {
+    console.log("Reset error:", error);
+  }
+};
+
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -149,13 +171,14 @@ export default function ProfileScreen({ navigation }) {
       </View>
 
       {/* --- RESET + LOGOUT --- */}
-      <TouchableOpacity style={styles.resetBtn}>
-        <Text style={styles.resetText}>Reset All Data</Text>
-      </TouchableOpacity>
 
       <TouchableOpacity style={styles.logoutBtn}>
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity style={styles.resetBtn} onPress={resetAllData}>
+  <Text style={styles.resetText}>Delete Account</Text>
+</TouchableOpacity>
 
       {/* --- EDITING MODAL --- */}
       {editingField && (
