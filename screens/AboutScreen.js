@@ -60,17 +60,6 @@ export default function AboutScreen() {
         <Text style={styles.cardText}>• Profile customization</Text>
       </View>
 
-      {/* Credits */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>
-          <Icon source="heart-outline" size={20} color="#6F4E37" />  
-          Credits
-        </Text>
-
-        <Text style={styles.cardText}>• Icons: MaterialCommunityIcons</Text>
-        <Text style={styles.cardText}>• Charts: react-native-chart-kit</Text>
-        <Text style={styles.cardText}>• Framework: React Native + Expo</Text>
-      </View>
 
       {/* Support */}
       <View style={[styles.card, { marginBottom: 40 }]}>
