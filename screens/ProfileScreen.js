@@ -176,9 +176,29 @@ export default function ProfileScreen({ navigation }) {
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.resetBtn} onPress={resetAllData}>
-  <Text style={styles.resetText}>Delete Account</Text>
+<TouchableOpacity
+  style={styles.deleteBtn}
+  onPress={() => {
+    Alert.alert(
+      "Delete Account",
+      "Are you sure you want to delete your account? This will remove all your data permanently.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            await AsyncStorage.clear();
+            navigation.replace("Auth"); // go back to login screen
+          },
+        },
+      ]
+    );
+  }}
+>
+  <Text style={styles.deleteText}>Delete Account</Text>
 </TouchableOpacity>
+
 
       {/* --- EDITING MODAL --- */}
       {editingField && (
@@ -287,15 +307,21 @@ const styles = StyleSheet.create({
 
   changeBtnText: { color: "#6F4E37", fontWeight: "600" },
 
-  resetBtn: {
-    backgroundColor: "#D6534A",
-    paddingVertical: 12,
-    borderRadius: 12,
-    width: "100%",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  resetText: { color: "white", fontSize: 17, fontWeight: "600" },
+deleteBtn: {
+  backgroundColor: "#D9534F",
+  paddingVertical: 12,
+  borderRadius: 12,
+  width: "100%",
+  alignItems: "center",
+  marginTop: 12,
+},
+
+deleteText: {
+  color: "white",
+  fontSize: 17,
+  fontWeight: "600",
+},
+
 
   logoutBtn: {
     backgroundColor: "#6F4E37",
