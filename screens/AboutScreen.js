@@ -1,19 +1,19 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView , TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { Icon } from "react-native-paper";
 
-export default function AboutScreen() {
+export default function AboutScreen({ navigation }) {   // <-- FIXED
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      
+      {/* Home Button */}
+    <TouchableOpacity
+  style={styles.homeBtn}
+  onPress={() => navigation.navigate("Main", { screen: "Home" })}
+>
+  <Icon source="home-outline" size={28} color="#6F4E37" />
+</TouchableOpacity>
 
-
-          {/* Home Navigation Button */}
-      <TouchableOpacity
-        style={styles.homeBtn}
-        onPress={() => navigation.navigate("Home")}
-      >
-        <Icon source="home-outline" size={28} color="#6F4E37" />
-      </TouchableOpacity>
 
       
       {/* App Logo */}
