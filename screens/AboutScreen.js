@@ -15,58 +15,71 @@ export default function AboutScreen() {
       <Text style={styles.title}>Campus Chai Tracker</Text>
       <Text style={styles.tagline}>Track your daily chai & coffee habits ☕📊</Text>
 
-      {/* --- App Version Card --- */}
+      {/* Version */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>App Version</Text>
-        <Text style={styles.cardText}>Campus Chai Tracker v1.0.0</Text>
+        <Text style={styles.cardTitle}>
+          <Icon source="information-outline" size={20} color="#6F4E37" />  App Version
+        </Text>
+        <Text style={styles.cardText}>1.0.0</Text>
       </View>
 
-            {/* --- App Description Card --- */}
+      {/* Description */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>What This App Does</Text>
+        <Text style={styles.cardTitle}>
+          <Icon source="text-box-outline" size={20} color="#6F4E37" />  About
+        </Text>
         <Text style={styles.cardText}>
-          Campus Chai Tracker helps you keep track of your daily tea and coffee
-          intake effortlessly. It maintains your history, shows weekly insights,
-          and motivates you to maintain healthy habits.
-        </Text>
-      </View>
-
-      {/* --- Developer Info Card --- */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Developer</Text>
-        <Text style={styles.cardText}>
-          This app was designed & developed as a personal project to showcase
-          React Native skills, state management, navigation handling, and clean
-          UI implementation.
-        </Text>
-
-        <Text style={[styles.cardText, { marginTop: 6, fontWeight: "600" }]}>
-          Developer: Shorya Taneja
-        </Text>
-        <Text style={styles.cardText}>Version: 1.0.0</Text>
-      </View>
-
-      {/* --- Contact / Support Card --- */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Contact & Support</Text>
-
-        <Text style={styles.cardText}>
-          Have feedback or found an issue? I'd love to hear from you!
-        </Text>
-
-        <Text style={[styles.cardText, { marginTop: 6 }]}>
-          📧 Email: shorya.taneja@example.com
-        </Text>
-
-        <Text style={styles.cardText}>
-          🌐 GitHub: github.com/shoryataneja
-        </Text>
-
-        <Text style={styles.cardText}>
-          💬 Feel free to reach out for improvements or collaborations.
+          Campus Chai Tracker is designed to help students track their daily tea
+          and coffee intake, maintain healthy limits, and understand their
+          weekly consumption insights in a clean and simple way.
         </Text>
       </View>
 
+      {/* Developer Info */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>
+          <Icon source="account-circle-outline" size={20} color="#6F4E37" />  
+          Developer
+        </Text>
+
+        <Text style={styles.cardText}>Shorya Taneja</Text>
+        <Text style={styles.cardText}>React Native Developer</Text>
+      </View>
+
+      {/* Features */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>
+          <Icon source="star-outline" size={20} color="#6F4E37" />  Features
+        </Text>
+
+        <Text style={styles.cardText}>• Track tea & coffee daily</Text>
+        <Text style={styles.cardText}>• View weekly stats</Text>
+        <Text style={styles.cardText}>• Healthy streak insights</Text>
+        <Text style={styles.cardText}>• Delete history & entries</Text>
+        <Text style={styles.cardText}>• Set daily drink limits</Text>
+        <Text style={styles.cardText}>• Profile customization</Text>
+      </View>
+
+      {/* Credits */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>
+          <Icon source="heart-outline" size={20} color="#6F4E37" />  
+          Credits
+        </Text>
+
+        <Text style={styles.cardText}>• Icons: MaterialCommunityIcons</Text>
+        <Text style={styles.cardText}>• Charts: react-native-chart-kit</Text>
+        <Text style={styles.cardText}>• Framework: React Native + Expo</Text>
+      </View>
+
+      {/* Support */}
+      <View style={[styles.card, { marginBottom: 40 }]}>
+        <Text style={styles.cardTitle}>
+          <Icon source="email-outline" size={20} color="#6F4E37" />  
+          Support
+        </Text>
+        <Text style={styles.cardText}>campuschai.support@gmail.com</Text>
+      </View>
 
     </ScrollView>
   );
@@ -77,14 +90,29 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF8F0",
     padding: 20,
     alignItems: "center",
-    flexGrow: 1,
+  },
+
+  logoCircle: {
+    width: 90,
+    height: 90,
+    borderRadius: 50,
+    backgroundColor: "#FFEEDB",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 40,
+    marginBottom: 15,
   },
 
   title: {
     fontSize: 24,
     fontWeight: "bold",
     color: "#6F4E37",
-    marginTop: 40,
+    marginBottom: 5,
+  },
+
+  tagline: {
+    fontSize: 14,
+    color: "#8B6B4A",
     marginBottom: 20,
   },
 
@@ -93,19 +121,20 @@ const styles = StyleSheet.create({
     width: "100%",
     padding: 18,
     borderRadius: 15,
-    marginBottom: 20,
+    marginVertical: 10,
   },
 
   cardTitle: {
     fontSize: 17,
     fontWeight: "600",
     color: "#6F4E37",
-    marginTop: 8 ,
+    marginBottom: 8,
   },
 
   cardText: {
     fontSize: 15,
     color: "#8B6B4A",
+    marginVertical: 2,
     lineHeight: 20,
   },
 });
