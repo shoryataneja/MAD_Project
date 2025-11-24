@@ -1,10 +1,20 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ScrollView , TouchableOpacity } from "react-native";
 import { Icon } from "react-native-paper";
 
 export default function AboutScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
+
+
+          {/* Home Navigation Button */}
+      <TouchableOpacity
+        style={styles.homeBtn}
+        onPress={() => navigation.navigate("Home")}
+      >
+        <Icon source="home-outline" size={28} color="#6F4E37" />
+      </TouchableOpacity>
+
       
       {/* App Logo */}
       <View style={styles.logoCircle}>
@@ -75,6 +85,15 @@ export default function AboutScreen() {
 }
 
 const styles = StyleSheet.create({
+
+
+    homeBtn: {
+    position: "absolute",
+    top: 75,
+    right: 25,
+    zIndex: 10,
+  },
+
   container: {
     backgroundColor: "#FFF8F0",
     padding: 20,
