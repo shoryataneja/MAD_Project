@@ -10,7 +10,7 @@ const AuthScreen = ({ navigation }) => {
 
   
 
-  const handleAuth = async () => {
+  const handleAuth = async() => {
     setMessage("");
 
     if (isSignup) {
