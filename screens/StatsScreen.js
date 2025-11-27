@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { View, Text, StyleSheet, FlatList, ScrollView } from "react-native";
+import { View, Text, StyleSheet, FlatList } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { BarChart } from "react-native-chart-kit";
@@ -32,13 +32,14 @@ export default function StatsScreen() {
     historyArray.forEach((item) => {
       const { date, type } = item;
       if (!dailyMap[date]) dailyMap[date] = { tea: 0, coffee: 0 };
-      if (type === "tea") dailyMap[date].tea += 1;
-      if (type === "coffee") dailyMap[date].coffee += 1;
+      if (type === "tea") dailyMap[date].tea++;
+      if (type === "coffee") dailyMap[date].coffee++;
     });
 
-    const todayTea = dailyMap[todayDate]?.tea || 0;
-    const todayCoffee = dailyMap[todayDate]?.coffee || 0;
-    setTodayStats({ tea: todayTea, coffee: todayCoffee });
+    setTodayStats({
+      tea: dailyMap[todayDate]?.tea || 0,
+      coffee: dailyMap[todayDate]?.coffee || 0,
+    });
 
     let teaTotal = 0,
       coffeeTotal = 0;
@@ -57,19 +58,16 @@ export default function StatsScreen() {
       coffee: (coffeeTotal / 7).toFixed(2),
     });
 
-    // Healthy streak
+    // streak
     let longest = 0,
       current = 0;
 
     for (let i = 0; i < 365; i++) {
-      const day = getDateNDaysAgo(i);
-      const d = dailyMap[day];
-
+      const d = dailyMap[getDateNDaysAgo(i)];
       const logged = d && (d.tea > 0 || d.coffee > 0);
-      const withinLimit =
-        logged && d.tea <= TEA_LIMIT && d.coffee <= COFFEE_LIMIT;
+      const within = logged && d.tea <= TEA_LIMIT && d.coffee <= COFFEE_LIMIT;
 
-      if (withinLimit) current++;
+      if (within) current++;
       else {
         longest = Math.max(longest, current);
         current = 0;
@@ -86,7 +84,6 @@ export default function StatsScreen() {
     }, [loadStats])
   );
 
-  // DATA FOR FLATLIST
   const statsData = [
     {
       id: "1",
@@ -95,10 +92,7 @@ export default function StatsScreen() {
           <Icon source="calendar-today" size={18} color="#6F4E37" /> Today
         </Text>
       ),
-      lines: [
-        `Tea: ${todayStats.tea}`,
-        `Coffee: ${todayStats.coffee}`,
-      ],
+      lines: [`Tea: ${todayStats.tea}`, `Coffee: ${todayStats.coffee}`],
     },
     {
       id: "2",
@@ -141,9 +135,8 @@ export default function StatsScreen() {
   const renderCard = ({ item }) => (
     <View style={styles.card}>
       <Text style={styles.cardTitle}>{item.title}</Text>
-
-      {item.lines.map((line, index) => (
-        <Text key={index} style={styles.statText}>
+      {item.lines.map((line, i) => (
+        <Text key={i} style={styles.statText}>
           {line}
         </Text>
       ))}
@@ -151,53 +144,54 @@ export default function StatsScreen() {
   );
 
   return (
-    <ScrollView
+    <FlatList
+      data={statsData}
+      keyExtractor={(item) => item.id}
+      renderItem={renderCard}
+      ListHeaderComponent={
+        <>
+          <Text style={styles.header}>
+            <Icon source="chart-box-outline" size={24} color="#6F4E37" /> Stats
+          </Text>
+        </>
+      }
+      ListFooterComponent={
+        <>
+          {weekStats.tea + weekStats.coffee > 0 && (
+            <View style={styles.chartContainer}>
+              <Text style={styles.chartTitle}>
+                <Icon source="chart-bar" size={20} color="#6F4E37" /> Weekly
+                Consumption Chart
+              </Text>
+
+              <BarChart
+                data={{
+                  labels: ["Tea", "Coffee"],
+                  datasets: [{ data: [weekStats.tea, weekStats.coffee] }],
+                }}
+                width={300}
+                height={200}
+                fromZero
+                showValuesOnTopOfBars
+                withInnerLines={false}
+                chartConfig={{
+                  backgroundColor: "#FFEEDB",
+                  backgroundGradientFrom: "#FFEEDB",
+                  backgroundGradientTo: "#FFEEDB",
+                  decimalPlaces: 0,
+                  color: () => "#6F4E37",
+                  labelColor: () => "#6F4E37",
+                  barPercentage: 0.6,
+                }}
+                style={styles.chartStyle}
+              />
+            </View>
+          )}
+        </>
+      }
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}
-    >
-      <Text style={styles.header}>
-        <Icon source="chart-box-outline" size={24} color="#6F4E37" /> Stats
-      </Text>
-
-      <FlatList
-        data={statsData}
-        keyExtractor={(item) => item.id}
-        renderItem={renderCard}
-        contentContainerStyle={{ alignItems: "center", paddingBottom: 20 }}
-        showsVerticalScrollIndicator={false}
-      />
-
-      {weekStats.tea + weekStats.coffee > 0 && (
-        <View style={styles.chartContainer}>
-          <Text style={styles.chartTitle}>
-            <Icon source="chart-bar" size={20} color="#6F4E37" /> Weekly
-            Consumption Chart
-          </Text>
-
-          <BarChart
-            data={{
-              labels: ["Tea", "Coffee"],
-              datasets: [{ data: [weekStats.tea, weekStats.coffee] }],
-            }}
-            width={300}
-            height={200}
-            fromZero
-            showValuesOnTopOfBars
-            withInnerLines={false}
-            chartConfig={{
-              backgroundColor: "#FFEEDB",
-              backgroundGradientFrom: "#FFEEDB",
-              backgroundGradientTo: "#FFEEDB",
-              decimalPlaces: 0,
-              color: () => "#6F4E37",
-              labelColor: () => "#6F4E37",
-              barPercentage: 0.6,
-            }}
-            style={styles.chartStyle}
-          />
-        </View>
-      )}
-    </ScrollView>
+    />
   );
 }
 
@@ -209,7 +203,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexGrow: 1,
   },
-
   header: {
     fontSize: 22,
     fontWeight: "bold",
@@ -217,13 +210,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: "#6F4E37",
   },
-
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-
+  titleRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   card: {
     backgroundColor: "#FFEEDB",
     height: 100,
@@ -232,20 +219,13 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     marginVertical: 10,
   },
-
   cardTitle: {
     fontSize: 17,
     fontWeight: "600",
     color: "#6F4E37",
     marginBottom: 6,
   },
-
-  statText: {
-    fontSize: 15,
-    color: "#8B6B4A",
-    marginVertical: 2,
-  },
-
+  statText: { fontSize: 15, color: "#8B6B4A", marginVertical: 2 },
   chartContainer: {
     marginTop: 10,
     backgroundColor: "#FFEEDB",
@@ -255,15 +235,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "92%",
   },
-
   chartTitle: {
     fontSize: 17,
     fontWeight: "600",
     color: "#6F4E37",
     marginBottom: 10,
   },
-
-  chartStyle: {
-    borderRadius: 15,
-  },
+  chartStyle: { borderRadius: 15 },
 });
